@@ -1,9 +1,7 @@
 import { useMonth } from '../../data/useMonth'
-import { fmtTemp, fmtMonth } from '../../lib/format'
+import { fmtTemp, fmtMonth, ordinal } from '../../lib/format'
 import { Loading, ErrorState } from '../../components/States'
 import PeriodScatter from '../../components/PeriodScatter'
-
-const ordinal = (n: number) => { const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]) }
 
 export default function MonthView({ mm, currentYear }: { mm: string; currentYear: number }) {
   const { data, loading, error } = useMonth(mm)
@@ -56,7 +54,7 @@ export default function MonthView({ mm, currentYear }: { mm: string; currentYear
       </div>
 
       <PeriodScatter title={`Every ${name} mean`}
-        data={complete.map(s => ({ year: s.year, mean: s.mean })) as never}
+        data={complete.map(s => ({ year: s.year, mean: s.mean }))}
         series={[{ key: 'mean', name: `${name} mean`, color: 'var(--accent)' }]} />
     </div>
   )

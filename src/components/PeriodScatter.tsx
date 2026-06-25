@@ -11,7 +11,7 @@ export const PERIODS: { label: string; from: number; to: number }[] = [
   { label: 'All time', from: 0, to: 9999 },
 ]
 
-type Row = { year: number } & Record<string, number>
+type Row = { year: number } & Record<string, number | undefined>
 
 export default function PeriodScatter({ data, series, title }: {
   data: Row[]; series: { key: string; name: string; color: string }[]; title: string

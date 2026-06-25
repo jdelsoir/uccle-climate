@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { mmddOf, todayMMDD, fmtTemp, fmtDate, fmtMonth, fmtDayLabel, todayISO } from './format'
+import { mmddOf, todayMMDD, fmtTemp, fmtDate, fmtMonth, fmtDayLabel, todayISO, ordinal } from './format'
 
 describe('mmddOf', () => {
   it('zero-pads month and day', () => {
@@ -50,5 +50,14 @@ describe('todayISO', () => {
     const exp = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     expect(todayISO()).toBe(exp)
     expect(todayISO()).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+  })
+})
+
+describe('ordinal', () => {
+  it('appends correct suffix', () => {
+    expect(ordinal(1)).toBe('1st')
+    expect(ordinal(4)).toBe('4th')
+    expect(ordinal(11)).toBe('11th')
+    expect(ordinal(22)).toBe('22nd')
   })
 })

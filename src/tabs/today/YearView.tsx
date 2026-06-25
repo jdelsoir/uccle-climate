@@ -1,9 +1,7 @@
 import { useSummary } from '../../data/useSummary'
-import { fmtTemp } from '../../lib/format'
+import { fmtTemp, ordinal } from '../../lib/format'
 import { Loading, ErrorState } from '../../components/States'
 import PeriodScatter from '../../components/PeriodScatter'
-
-const ordinal = (n: number) => { const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]) }
 
 export default function YearView({ year }: { year: number }) {
   const { summary, loading, error } = useSummary()
@@ -50,7 +48,7 @@ export default function YearView({ year }: { year: number }) {
       </div>
 
       <PeriodScatter title="Annual mean by year"
-        data={summary.annual.filter(x => !x.incomplete).map(x => ({ year: x.year, mean: x.mean })) as never}
+        data={summary.annual.filter(x => !x.incomplete).map(x => ({ year: x.year, mean: x.mean }))}
         series={[{ key: 'mean', name: 'Annual mean', color: 'var(--accent)' }]} />
     </div>
   )

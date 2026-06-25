@@ -3,13 +3,11 @@ import { useThisDay } from '../../data/useThisDay'
 import { useTodayTemp } from '../../data/useTodayTemp'
 import { useDayNorm } from '../../data/useDayNorm'
 import { useSummary } from '../../data/useSummary'
-import { fmtTemp } from '../../lib/format'
+import { fmtTemp, todayISO, ordinal } from '../../lib/format'
 import { rankOf, meanAnomaly } from '../../lib/stats'
 import { allTimeRank } from '../../lib/records'
 import { Loading, ErrorState } from '../../components/States'
 import PeriodScatter from '../../components/PeriodScatter'
-
-const ordinal = (n: number) => { const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]) }
 
 export default function DayView({ mmdd, isToday }: { mmdd: string; isToday: boolean }) {
   const { data, loading, error } = useThisDay(mmdd)
@@ -32,8 +30,11 @@ export default function DayView({ mmdd, isToday }: { mmdd: string; isToday: bool
 
   let allTime: { rank: number; kind: 'warmest' | 'coldest' } | null = null
   if (ld && summary?.extremes) {
-    const wRank = allTimeRank(summary.extremes.warmest.map(e => e.v), ld.tmax, 'warm')
-    const cRank = allTimeRank(summary.extremes.coldest.map(e => e.v), ld.tmin, 'cold')
+    const today = todayISO()
+    const warmVals = summary.extremes.warmest.filter(e => e.date !== today).map(e => e.v)
+    const coldVals = summary.extremes.coldest.filter(e => e.date !== today).map(e => e.v)
+    const wRank = allTimeRank(warmVals, ld.tmax, 'warm')
+    const cRank = allTimeRank(coldVals, ld.tmin, 'cold')
     if (wRank <= 10) allTime = { rank: wRank, kind: 'warmest' }
     else if (cRank <= 10) allTime = { rank: cRank, kind: 'coldest' }
   }
@@ -90,7 +91,7 @@ export default function DayView({ mmdd, isToday }: { mmdd: string; isToday: bool
       </div>
 
       <PeriodScatter title="Every year on this date"
-        data={data.series as never}
+        data={data.series}
         series={[{ key: 'tmax', name: 'High', color: 'var(--warm)' }, { key: 'tmin', name: 'Low', color: 'var(--accent)' }]} />
     </div>
   )

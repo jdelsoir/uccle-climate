@@ -135,27 +135,7 @@ export default function Today() {
           </ComposedChart>
         </ResponsiveContainer>
       </div>
-
-      <YearPicker series={data.series} />
     </section>
-  )
-}
-
-function YearPicker({ series }: { series: { year: number; tmax: number; tmin: number }[] }) {
-  const [sel, setSel] = useState<number>(series[0]?.year)
-  const s = series.find(x => x.year === sel)
-  return (
-    <details className="rounded-xl border border-border bg-surface p-4">
-      <summary className="cursor-pointer text-sm font-semibold">Time machine — pick a year</summary>
-      <select
-        value={sel}
-        onChange={e => setSel(Number(e.target.value))}
-        className="mt-3 w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm"
-      >
-        {series.map(x => <option key={x.year} value={x.year}>{x.year}</option>)}
-      </select>
-      {s && <p className="mt-2 text-sm text-muted">{s.year}: max {s.tmax} °C, min {s.tmin} °C</p>}
-    </details>
   )
 }
 

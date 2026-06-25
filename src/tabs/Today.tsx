@@ -4,7 +4,7 @@ import { useThisDay } from '../data/useThisDay'
 import { useTodayTemp } from '../data/useTodayTemp'
 import { useDayNorm } from '../data/useDayNorm'
 import { todayMMDD, fmtTemp } from '../lib/format'
-import { rankOf } from '../lib/stats'
+import { rankOf, meanAnomaly } from '../lib/stats'
 import DotColumn from '../components/DotColumn'
 import { Loading, ErrorState } from '../components/States'
 
@@ -44,11 +44,11 @@ export default function Today() {
             {ordinal(r.rank)} warmest on this date in {r.total} years · {ordinal(Math.round(r.pct))} percentile
           </p>
         )}
-        {entry?.normal != null && todayTmax != null && (() => {
-          const diff = Math.round((todayTmax - entry.normal) * 10) / 10
+        {entry?.normal != null && live.data != null && (() => {
+          const diff = meanAnomaly(live.data.tmax, live.data.tmin, entry.normal)
           return (
             <p className="mt-3 text-sm text-muted">
-              <strong className="text-fg">{Math.abs(diff)} °C {diff >= 0 ? 'above' : 'below'}</strong> the 1991–2020 normal ({entry.normal} °C) for this date.
+              Today averages <strong className="text-fg">{Math.abs(diff)} °C {diff >= 0 ? 'above' : 'below'}</strong> the 1991–2020 normal ({entry.normal} °C) for this date.
             </p>
           )
         })()}

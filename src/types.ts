@@ -9,7 +9,7 @@ export interface Summary {
   annual: AnnualPoint[]
   anomaly: Record<Baseline, AnomalyPoint[]>
   decadal: DecadalPoint[]
-  warmingRate: { full: number; last30: number }
+  warmingRate: { full: number | null; last30: number | null }
   counters: { SU: CounterPoint[]; hot30: CounterPoint[]; TR: CounterPoint[]; FD: CounterPoint[]; ID: CounterPoint[]; heatwaveDays: CounterPoint[]; gsl: CounterPoint[] }
   rankings: { warmest: { year: number; mean: number }[]; coldest: { year: number; mean: number }[] }
 }

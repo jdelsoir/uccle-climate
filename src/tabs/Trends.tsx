@@ -10,12 +10,18 @@ export default function Trends() {
   const [base, setBase] = useState<Baseline>('1991-2020')
   if (loading) return <p>Loading…</p>
   if (error || !summary) return <p>Could not load data.</p>
-  const anom = summary.anomaly[base]
+  const incompleteYears = new Set(summary.annual.filter(a => a.incomplete).map(a => a.year))
+  const anom = summary.anomaly[base].filter(a => !incompleteYears.has(a.year))
   return (
     <section>
       <h2>Warming Trends</h2>
       <Stripes points={anom.map(a => ({ year: a.year, v: a.v }))} />
-      <p className="headline">Uccle is warming <strong>{summary.warmingRate.full} °C per decade</strong> (last 30 yrs: {summary.warmingRate.last30} °C/decade).</p>
+      {summary.warmingRate.full != null && (
+        <p className="headline">
+          Uccle is warming <strong>{summary.warmingRate.full} °C per decade</strong>
+          {summary.warmingRate.last30 != null && ` (last 30 yrs: ${summary.warmingRate.last30} °C/decade)`}.
+        </p>
+      )}
       <label>Baseline:
         <select value={base} onChange={e => setBase(e.target.value as Baseline)}>
           <option value="1991-2020">1991–2020</option>

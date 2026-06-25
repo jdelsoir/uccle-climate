@@ -19,7 +19,10 @@ export default function Me() {
   if (loading) return <p>Loading…</p>
   if (error || !summary) return <p>Could not load data.</p>
 
-  const anom = summary.anomaly['1991-2020'].filter((a) => year !== '' && a.year >= year)
+  const maxYear = summary.annual.filter(a => !a.incomplete).reduce((m, a) => Math.max(m, a.year), 1833)
+
+  const incompleteYears = new Set(summary.annual.filter(a => a.incomplete).map(a => a.year))
+  const anom = summary.anomaly['1991-2020'].filter((a) => year !== '' && a.year >= year && !incompleteYears.has(a.year))
   const annual = summary.annual
 
   let warming: number | null = null
@@ -37,7 +40,7 @@ export default function Me() {
         <input
           type="number"
           min={1833}
-          max={2026}
+          max={maxYear}
           value={year}
           onChange={(e) => setYear(e.target.value ? Number(e.target.value) : '')}
         />

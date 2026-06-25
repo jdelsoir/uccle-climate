@@ -7,10 +7,18 @@ import { useDayNorm } from '../data/useDayNorm'
 import { useSummary } from '../data/useSummary'
 import { todayMMDD, fmtTemp } from '../lib/format'
 import { rankOf, meanAnomaly } from '../lib/stats'
-import DotColumn from '../components/DotColumn'
 import { Loading, ErrorState } from '../components/States'
 
 const tooltipStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--fg)', fontSize: 12 }
+
+// "Every year on this date" period filter — default first (2001–Now).
+const PERIODS: { label: string; from: number; to: number }[] = [
+  { label: '2001–Now', from: 2001, to: 9999 },
+  { label: '1951–2000', from: 1951, to: 2000 },
+  { label: '1901–1950', from: 1901, to: 1950 },
+  { label: '1833–1900', from: 1833, to: 1900 },
+  { label: 'All time', from: 0, to: 9999 },
+]
 
 export default function Today() {
   const mmdd = todayMMDD()
@@ -18,6 +26,7 @@ export default function Today() {
   const live = useTodayTemp()
   const dayNorm = useDayNorm()
   const { summary } = useSummary()
+  const [periodIdx, setPeriodIdx] = useState(0)
   if (loading) return <Loading label="Loading today…" />
   if (error || !data) return <ErrorState label="Could not load this date." />
   const maxima = data.series.map(s => s.tmax)
@@ -35,6 +44,8 @@ export default function Today() {
       ? 'rounded-xl border-2 border-accent bg-accent/5 p-5'
       : 'rounded-xl border border-border bg-surface p-5'
   const recordCount = summary?.records ? (isHotRecord ? summary.records.highs : summary.records.lows) : 0
+  const period = PERIODS[periodIdx]
+  const shown = data.series.filter(s => s.year >= period.from && s.year <= period.to)
 
   return (
     <section className="fade-in space-y-4">
@@ -99,15 +110,28 @@ export default function Today() {
       </div>
 
       <div className="rounded-xl border border-border bg-surface p-4">
-        <p className="mb-2 text-[11px] uppercase tracking-[0.09em] text-muted">Every year on this date</p>
-        <DotColumn values={data.series.map(s => ({ year: s.year, value: s.tmax, highlight: s.year === new Date().getFullYear() }))} />
-        <ResponsiveContainer width="100%" height={220}>
-          <ComposedChart data={data.series} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <p className="text-[11px] uppercase tracking-[0.09em] text-muted">Every year on this date</p>
+          <select
+            value={periodIdx}
+            onChange={e => setPeriodIdx(Number(e.target.value))}
+            className="rounded-lg border border-border bg-surface-2 px-2 py-1 text-xs"
+            aria-label="Period"
+          >
+            {PERIODS.map((p, i) => <option key={p.label} value={i}>{p.label}</option>)}
+          </select>
+        </div>
+        <p className="mb-1 text-xs text-muted">
+          <span className="text-warm">●</span> High <span className="ml-2 text-accent">●</span> Low (°C)
+        </p>
+        <ResponsiveContainer width="100%" height={240}>
+          <ComposedChart data={shown} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
             <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
             <XAxis dataKey="year" tick={{ fill: 'var(--muted)', fontSize: 11 }} stroke="var(--border)" />
             <YAxis tick={{ fill: 'var(--muted)', fontSize: 11 }} stroke="var(--border)" />
             <Tooltip contentStyle={tooltipStyle} />
-            <Scatter dataKey="tmax" fill="var(--warm)" />
+            <Scatter name="High" dataKey="tmax" fill="var(--warm)" />
+            <Scatter name="Low" dataKey="tmin" fill="var(--accent)" />
           </ComposedChart>
         </ResponsiveContainer>
       </div>

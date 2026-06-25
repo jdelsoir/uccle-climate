@@ -24,6 +24,12 @@ test('shows rank badge using live temp', async () => {
   expect(screen.getByText(/34.8/)).toBeInTheDocument()  // record high
   // today's live max (36) beats the record high (34.8) → record banner shows
   expect(screen.getByText(/record high for this date/i)).toBeInTheDocument()
+  // period selector present, default to first option (2001–Now)
+  const period = screen.getByLabelText('Period') as HTMLSelectElement
+  expect(period).toBeInTheDocument()
+  expect(period.value).toBe('0')
+  expect(screen.getByRole('option', { name: 'All time' })).toBeInTheDocument()
+  expect(screen.getByRole('option', { name: '1833–1900' })).toBeInTheDocument()
 })
 
 test('shows anomaly vs 1991-2020 normal for today', async () => {

@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-const tabs = [['/today','Today'],['/trends','Trends'],['/climate','Climate'],['/me','Me']]
+const tabs = [['/today','Today'],['/trends','Trends'],['/climate','Climate'],['/about','About'],['/me','Me']]
 export default function BottomNav() {
   return (
     <nav className="bottom-nav">

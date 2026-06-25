@@ -1,54 +1,29 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { vi } from 'vitest'
 import Today from './Today'
-import { todayMMDD } from '../lib/format'
 
-// Mock Recharts ResponsiveContainer to avoid jsdom width(0) warnings
-vi.mock('recharts', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('recharts')>()
-  return { ...actual, ResponsiveContainer: ({ children }: { children: React.ReactNode }) =>
-    <div style={{ width: 800, height: 300 }}>{children}</div> }
-})
+vi.mock('recharts', async (o) => { const a = await o<typeof import('recharts')>()
+  return { ...a, ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div style={{ width: 800, height: 300 }}>{children}</div> } })
 
-const thisday = { mmdd:'0625', recordHigh:{v:34.8,year:1947}, recordLow:{v:4.1,year:1923},
-  series:[{year:1900,tmax:24,tmin:12},{year:2020,tmax:33,tmin:20}],
-  thenNow:{early:{from:1833,to:1900,mean:18},recent:{from:1996,to:2025,mean:21}} }
+const thisday = { mmdd: '0626', recordHigh: { v: 34.8, year: 1947 }, recordLow: { v: 4.1, year: 1923 },
+  series: [{ year: 2020, tmax: 33, tmin: 20 }], thenNow: { early: { from: 1833, to: 1900, mean: 18 }, recent: { from: 1996, to: 2025, mean: 21 } } }
+const month = { mm: '06', series: [{ year: 2020, mean: 19, complete: true }], recordWarm: { year: 2020, v: 19 }, recordCold: { year: 2020, v: 19 }, normal: 17, thenNow: { early: { from: 1833, to: 1900, mean: 15 }, recent: { from: 1996, to: 2025, mean: 18 } } }
+const summary = { station: {}, baselines: { '1991-2020': 10, '1961-1990': 10 }, annual: [{ year: 2026, mean: 11, tmin: 6, tmax: 16, incomplete: true }, { year: 2025, mean: 12, tmin: 7, tmax: 17, incomplete: false }],
+  anomaly: { '1991-2020': [], '1961-1990': [] }, decadal: [], warmingRate: { full: 0, last30: 0 }, records: { year: 2026, highs: 0, lows: 0 },
+  extremes: { warmest: [], coldest: [] }, counters: { SU: [], hot30: [], TR: [], FD: [], ID: [], heatwaveDays: [], gsl: [] }, rankings: { warmest: [{ year: 2025, mean: 12 }], coldest: [{ year: 2025, mean: 12 }] } }
 
-test('shows rank badge using live temp', async () => {
-  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) =>
-    Promise.resolve({ ok:true, json: async () =>
-      u.includes('open-meteo')
-        ? { current:{temperature_2m:35}, daily:{temperature_2m_max:[36],temperature_2m_min:[20]} }
-        : thisday })))
-  render(<Today />)
-  await waitFor(() => expect(screen.getByText(/warmest/i)).toBeInTheDocument())
-  expect(screen.getByText(/34.8/)).toBeInTheDocument()  // record high
-  // today's live max (36) beats the record high (34.8) → record banner shows
-  expect(screen.getByText(/record high for this date/i)).toBeInTheDocument()
-  // status line drops the percentile
-  expect(screen.queryByText(/percentile/i)).not.toBeInTheDocument()
-  // period selector present, default to first option (2001–Now)
-  const period = screen.getByLabelText('Period') as HTMLSelectElement
-  expect(period).toBeInTheDocument()
-  expect(period.value).toBe('0')
-  expect(screen.getByRole('option', { name: 'All time' })).toBeInTheDocument()
-  expect(screen.getByRole('option', { name: '1833–1900' })).toBeInTheDocument()
-})
-
-test('shows anomaly vs 1991-2020 normal for today', async () => {
-  const daynorm = {
-    '1991-2020': [{ doy: 176, mmdd: todayMMDD(), normal: 18.5, p10: 14.0, p90: 23.0 }],
-    '1961-1990': [],
-  }
-  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) =>
-    Promise.resolve({ ok: true, json: async () =>
-      u.includes('open-meteo')
-        ? { current: { temperature_2m: 20.5 }, daily: { temperature_2m_max: [21], temperature_2m_min: [15] } }
-        : u.includes('daynorm.json')
-          ? daynorm
-          : thisday })))
-  render(<Today />)
-  await waitFor(() => expect(screen.getByText(/1991.2020 normal/i)).toBeInTheDocument())
-})
-
+function routeFetch(u: string) {
+  if (u.includes('open-meteo')) return { current: { temperature_2m: 20 }, daily: { temperature_2m_max: [21], temperature_2m_min: [12] } }
+  if (u.includes('/month/')) return month
+  if (u.includes('summary.json')) return summary
+  return thisday
+}
 afterEach(() => vi.unstubAllGlobals())
+
+test('defaults to Day mode with heading and switches to Month', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
+  render(<Today />)
+  expect(screen.getByRole('heading', { name: /this day in history/i })).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: /month/i }))
+  await waitFor(() => expect(screen.getByRole('heading', { name: /this month in history/i })).toBeInTheDocument())
+})

@@ -11,6 +11,8 @@ vi.mock('recharts', async (importOriginal) => {
   }
 })
 
+afterEach(() => vi.unstubAllGlobals())
+
 const summary = {
   station: { id: 'BE000006447', name: 'Uccle', lat: 50.8, lon: 4.36 },
   baselines: { '1991-2020': 10.9, '1961-1990': 9.8 },
@@ -26,5 +28,4 @@ test('shows warming rate headline', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => summary }))
   render(<Trends />)
   await waitFor(() => expect(screen.getByText(/per decade/i)).toBeInTheDocument())
-  vi.unstubAllGlobals()
 })

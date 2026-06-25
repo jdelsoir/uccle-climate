@@ -1,5 +1,6 @@
 from collections import defaultdict
 import datetime as dt
+import calendar
 
 def annual_means(recs, min_days=330):
     by_year = defaultdict(list)
@@ -169,4 +170,14 @@ def per_date(recs, early=(1833, 1900), recent=(1996, 2025)):
                 "recent": {"from": recent[0], "to": recent[1], "mean": _window_mean(rs, *recent)},
             },
         }
+    return out
+
+def monthly_means(recs):
+    by = defaultdict(list)
+    for r in recs:
+        by[(r["date"].year, r["date"].month)].append(r["tmean"])
+    out = {}
+    for (y, m), vals in by.items():
+        dim = calendar.monthrange(y, m)[1]
+        out[(y, m)] = {"mean": round(sum(vals) / len(vals), 2), "n": len(vals), "complete": len(vals) >= dim - 3}
     return out

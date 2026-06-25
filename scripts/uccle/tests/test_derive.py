@@ -1,6 +1,6 @@
 import datetime as dt
 import pytest
-from scripts.uccle.derive import annual_means, baseline_mean, anomalies, decadal_means, ols_slope_per_decade, percentile, doy_normals, per_date, threshold_counters, heatwave_days, growing_season, rankings
+from scripts.uccle.derive import annual_means, baseline_mean, anomalies, decadal_means, ols_slope_per_decade, percentile, doy_normals, per_date, threshold_counters, heatwave_days, growing_season, rankings, monthly_means
 
 def day(y, m, d, tmax, tmin):
     return {"date": dt.date(y, m, d), "tmax": tmax, "tmin": tmin, "tmean": (tmax + tmin) / 2}
@@ -132,3 +132,18 @@ def test_growing_season():
     # first warm run ends at day 6 (start = day 1); first cold run after doy>=182 ends at day 187 (start = day 182)
     # GSL = 182 - 1 = 181 days (delta between start dates as dt.date objects)
     assert result[0]["n"] == 181
+
+
+def month_recs(year, month, n, tmean):
+    out = []
+    for d in range(1, n + 1):
+        out.append({"date": dt.date(year, month, d), "tmax": tmean + 5, "tmin": tmean - 5, "tmean": tmean})
+    return out
+
+def test_monthly_means_and_completeness():
+    full = month_recs(2000, 6, 30, 18.0)     # June has 30 days → complete
+    partial = month_recs(2026, 6, 26, 20.0)  # 26 < 30-3 → incomplete
+    mm = monthly_means(full + partial)
+    assert mm[(2000, 6)] == {"mean": 18.0, "n": 30, "complete": True}
+    assert mm[(2026, 6)]["complete"] is False
+    assert mm[(2026, 6)]["mean"] == 20.0

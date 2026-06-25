@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { mmddOf, todayMMDD, fmtTemp } from './format'
+import { mmddOf, todayMMDD, fmtTemp, fmtDate } from './format'
 
 describe('mmddOf', () => {
   it('zero-pads month and day', () => {
@@ -25,5 +25,12 @@ describe('fmtTemp', () => {
   it('returns em-dash for null or undefined', () => {
     expect(fmtTemp(null)).toBe('—')
     expect(fmtTemp(undefined)).toBe('—')
+  })
+})
+
+describe('fmtDate', () => {
+  it('formats an ISO date as D Mon YYYY (TZ-safe)', () => {
+    expect(fmtDate('1947-06-25')).toBe('25 Jun 1947')
+    expect(fmtDate('1926-01-03')).toBe('3 Jan 1926')
   })
 })

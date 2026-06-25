@@ -19,6 +19,10 @@ def test_build_emits_expected_files(tmp_path):
     # records-this-year: latest year is 2019; it holds the 06-25 record high (33.0)
     assert summary["records"]["year"] == 2019
     assert summary["records"]["highs"] >= 1
+    # top-10 daily extremes: warmest day is 2019-06-25 at 33.0
+    assert summary["extremes"]["warmest"][0] == {"date": "2019-06-25", "v": 33.0}
+    assert len(summary["extremes"]["warmest"]) == 10
+    assert len(summary["extremes"]["coldest"]) == 10
 
 
 def test_merge_archive_keeps_ghcn_and_fills_gaps():

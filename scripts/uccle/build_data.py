@@ -62,6 +62,13 @@ def build(text=None, records=None, archive=None, out_dir="public/data"):
         "highs": sum(1 for v in per_date.values() if v["recordHigh"]["year"] == latest_year),
         "lows": sum(1 for v in per_date.values() if v["recordLow"]["year"] == latest_year),
     }
+    # Top-10 individual-day extremes across the whole record (date + value).
+    extremes = {
+        "warmest": [{"date": r["date"].isoformat(), "v": r["tmax"]}
+                    for r in sorted(recs, key=lambda r: r["tmax"], reverse=True)[:10]],
+        "coldest": [{"date": r["date"].isoformat(), "v": r["tmin"]}
+                    for r in sorted(recs, key=lambda r: r["tmin"])[:10]],
+    }
     bases = {}
     for k, (s, e) in BASELINES.items():
         try:
@@ -78,6 +85,7 @@ def build(text=None, records=None, archive=None, out_dir="public/data"):
         "decadal": derive.decadal_means(recs),
         "warmingRate": _safe_warming_rate(annual),
         "records": records,
+        "extremes": extremes,
         "counters": {**derive.threshold_counters(recs),
                      "heatwaveDays": derive.heatwave_days(recs),
                      "gsl": derive.growing_season(recs)},

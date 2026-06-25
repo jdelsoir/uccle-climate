@@ -1,9 +1,10 @@
 import { NavLink } from 'react-router-dom'
-import { Sun, TrendingUp, Thermometer, User, Info } from 'lucide-react'
+import { Sun, TrendingUp, Trophy, Thermometer, User, Info } from 'lucide-react'
 
 const tabs = [
   { to: '/today', label: 'Today', Icon: Sun },
   { to: '/trends', label: 'Trends', Icon: TrendingUp },
+  { to: '/records', label: 'Records', Icon: Trophy },
   { to: '/climate', label: 'Climate', Icon: Thermometer },
   { to: '/me', label: 'Me', Icon: User },
   { to: '/about', label: 'About', Icon: Info },

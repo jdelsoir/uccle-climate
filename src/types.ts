@@ -11,6 +11,7 @@ export interface Summary {
   decadal: DecadalPoint[]
   warmingRate: { full: number | null; last30: number | null }
   records: { year: number; highs: number; lows: number }
+  extremes: { warmest: { date: string; v: number }[]; coldest: { date: string; v: number }[] }
   counters: { SU: CounterPoint[]; hot30: CounterPoint[]; TR: CounterPoint[]; FD: CounterPoint[]; ID: CounterPoint[]; heatwaveDays: CounterPoint[]; gsl: CounterPoint[] }
   rankings: { warmest: { year: number; mean: number }[]; coldest: { year: number; mean: number }[] }
 }

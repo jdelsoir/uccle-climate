@@ -3,6 +3,7 @@ import Header from './components/Header'
 import Nav from './components/Nav'
 import Today from './tabs/Today'
 import Trends from './tabs/Trends'
+import Records from './tabs/Records'
 import Climate from './tabs/Climate'
 import Me from './tabs/Me'
 import About from './tabs/About'
@@ -17,6 +18,7 @@ export default function App() {
           <Routes>
             <Route path="/today" element={<Today />} />
             <Route path="/trends" element={<Trends />} />
+            <Route path="/records" element={<Records />} />
             <Route path="/climate" element={<Climate />} />
             <Route path="/me" element={<Me />} />
             <Route path="/about" element={<About />} />

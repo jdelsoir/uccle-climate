@@ -5,3 +5,11 @@ export const todayMMDD = (): string => mmddOf(new Date())
 
 export const fmtTemp = (t: number | null | undefined): string =>
   t == null ? '—' : `${t.toFixed(1)} °C`
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+// "1947-06-25" -> "25 Jun 1947" (TZ-safe; no Date parsing).
+export const fmtDate = (iso: string): string => {
+  const [y, m, d] = iso.split('-').map(Number)
+  return `${d} ${MONTHS[m - 1]} ${y}`
+}

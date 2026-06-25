@@ -1,54 +1,95 @@
 import { useState } from 'react'
-import { Scatter, XAxis, YAxis, ResponsiveContainer, ComposedChart } from 'recharts'
+import { Scatter, XAxis, YAxis, ResponsiveContainer, ComposedChart, CartesianGrid, Tooltip } from 'recharts'
 import { useThisDay } from '../data/useThisDay'
 import { useTodayTemp } from '../data/useTodayTemp'
 import { useDayNorm } from '../data/useDayNorm'
 import { todayMMDD, fmtTemp } from '../lib/format'
 import { rankOf } from '../lib/stats'
 import DotColumn from '../components/DotColumn'
+import { Loading, ErrorState } from '../components/States'
+
+const tooltipStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--fg)', fontSize: 12 }
 
 export default function Today() {
   const mmdd = todayMMDD()
   const { data, loading, error } = useThisDay(mmdd)
   const live = useTodayTemp()
   const dayNorm = useDayNorm()
-  if (loading) return <p>Loading…</p>
-  if (error || !data) return <p>Could not load this date.</p>
+  if (loading) return <Loading label="Loading today…" />
+  if (error || !data) return <ErrorState label="Could not load this date." />
   const maxima = data.series.map(s => s.tmax)
   const todayTmax = live.data?.tmax
   const r = todayTmax != null ? rankOf(todayTmax, maxima) : null
+  const norms = dayNorm.data?.['1991-2020']
+  const entry = norms?.find(n => n.mmdd === mmdd)
+
   return (
-    <section>
-      <h2>This Day in History</h2>
-      <p className="today">
-        {live.error ? 'Live temperature unavailable — showing records only.'
-          : live.loading ? 'Fetching today…'
-          : <>Today in Uccle: <strong>{fmtTemp(live.data!.temp)}</strong>
-             {' '}(max {fmtTemp(live.data!.tmax)})</>}
-      </p>
-      {r && <p className="badge">Today is the <strong>{ordinal(r.rank)} warmest</strong> on this date in {r.total} years ({ordinal(Math.round(r.pct))} percentile).</p>}
-      <p>Record high: <strong>{fmtTemp(data.recordHigh.v)}</strong> ({data.recordHigh.year}) · Record low: <strong>{fmtTemp(data.recordLow.v)}</strong> ({data.recordLow.year})</p>
-      <p>Then vs now: {fmtTemp(data.thenNow.early.mean)} ({data.thenNow.early.from}–{data.thenNow.early.to}) → {fmtTemp(data.thenNow.recent.mean)} ({data.thenNow.recent.from}–{data.thenNow.recent.to})</p>
-      {(() => {
-        const norms = dayNorm.data?.['1991-2020']
-        const entry = norms?.find(n => n.mmdd === mmdd)
-        const liveTmax = live.data?.tmax
-        if (entry?.normal == null || liveTmax == null) return null
-        const diff = Math.round((liveTmax - entry.normal) * 10) / 10
-        const dir = diff >= 0 ? 'above' : 'below'
-        return (
-          <p className="anomaly">
-            Today is <strong>{Math.abs(diff)} °C {dir}</strong> the 1991–2020 normal ({entry.normal} °C) for this date.
+    <section className="fade-in space-y-4">
+      <h2 className="text-2xl font-extrabold tracking-tight">This Day in History</h2>
+
+      <div className="rounded-xl border border-border bg-surface p-5">
+        <p className="text-[11px] uppercase tracking-[0.09em] text-muted">Today · Uccle, Brussels</p>
+        {live.error ? (
+          <p className="mt-1 text-sm text-muted">Live temperature unavailable — showing records only.</p>
+        ) : live.loading ? (
+          <p className="mt-1 text-sm text-muted">Fetching today…</p>
+        ) : (
+          <div className="mt-1 flex items-end gap-3">
+            <span className="text-[46px] font-extrabold leading-none">{fmtTemp(live.data!.temp)}</span>
+            <span className="pb-1.5 text-sm text-muted">max {fmtTemp(live.data!.tmax)}</span>
+          </div>
+        )}
+        {r && (
+          <p className="mt-3 inline-block rounded-full bg-badge-bg px-3 py-1 text-xs font-semibold text-badge-fg">
+            {ordinal(r.rank)} warmest on this date in {r.total} years · {ordinal(Math.round(r.pct))} percentile
           </p>
-        )
-      })()}
-      <DotColumn values={data.series.map(s => ({ year: s.year, value: s.tmax, highlight: s.year === new Date().getFullYear() }))} />
-      <ResponsiveContainer width="100%" height={240}>
-        <ComposedChart data={data.series}>
-          <XAxis dataKey="year" /><YAxis />
-          <Scatter dataKey="tmax" fill="#b22222" />
-        </ComposedChart>
-      </ResponsiveContainer>
+        )}
+        {entry?.normal != null && todayTmax != null && (() => {
+          const diff = Math.round((todayTmax - entry.normal) * 10) / 10
+          return (
+            <p className="mt-3 text-sm text-muted">
+              <strong className="text-fg">{Math.abs(diff)} °C {diff >= 0 ? 'above' : 'below'}</strong> the 1991–2020 normal ({entry.normal} °C) for this date.
+            </p>
+          )
+        })()}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-xl border border-border bg-surface p-4">
+          <p className="text-[11px] uppercase tracking-[0.09em] text-muted">Record high</p>
+          <p className="mt-1 text-lg font-bold text-warm">{fmtTemp(data.recordHigh.v)}</p>
+          <p className="text-xs text-muted">{data.recordHigh.year}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-surface p-4">
+          <p className="text-[11px] uppercase tracking-[0.09em] text-muted">Record low</p>
+          <p className="mt-1 text-lg font-bold text-accent">{fmtTemp(data.recordLow.v)}</p>
+          <p className="text-xs text-muted">{data.recordLow.year}</p>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-border bg-surface p-4">
+        <p className="text-[11px] uppercase tracking-[0.09em] text-muted">Then vs now</p>
+        <p className="mt-1 text-sm">
+          {fmtTemp(data.thenNow.early.mean)} <span className="text-muted">({data.thenNow.early.from}–{data.thenNow.early.to})</span>
+          {' → '}
+          <strong>{fmtTemp(data.thenNow.recent.mean)}</strong> <span className="text-muted">({data.thenNow.recent.from}–{data.thenNow.recent.to})</span>
+        </p>
+      </div>
+
+      <div className="rounded-xl border border-border bg-surface p-4">
+        <p className="mb-2 text-[11px] uppercase tracking-[0.09em] text-muted">Every year on this date</p>
+        <DotColumn values={data.series.map(s => ({ year: s.year, value: s.tmax, highlight: s.year === new Date().getFullYear() }))} />
+        <ResponsiveContainer width="100%" height={220}>
+          <ComposedChart data={data.series} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
+            <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+            <XAxis dataKey="year" tick={{ fill: 'var(--muted)', fontSize: 11 }} stroke="var(--border)" />
+            <YAxis tick={{ fill: 'var(--muted)', fontSize: 11 }} stroke="var(--border)" />
+            <Tooltip contentStyle={tooltipStyle} />
+            <Scatter dataKey="tmax" fill="var(--warm)" />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+
       <YearPicker series={data.series} />
     </section>
   )
@@ -58,12 +99,16 @@ function YearPicker({ series }: { series: { year: number; tmax: number; tmin: nu
   const [sel, setSel] = useState<number>(series[0]?.year)
   const s = series.find(x => x.year === sel)
   return (
-    <details>
-      <summary>Time machine — pick a year</summary>
-      <select value={sel} onChange={e => setSel(Number(e.target.value))}>
+    <details className="rounded-xl border border-border bg-surface p-4">
+      <summary className="cursor-pointer text-sm font-semibold">Time machine — pick a year</summary>
+      <select
+        value={sel}
+        onChange={e => setSel(Number(e.target.value))}
+        className="mt-3 w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm"
+      >
         {series.map(x => <option key={x.year} value={x.year}>{x.year}</option>)}
       </select>
-      {s && <p>{s.year}: max {s.tmax} °C, min {s.tmin} °C</p>}
+      {s && <p className="mt-2 text-sm text-muted">{s.year}: max {s.tmax} °C, min {s.tmin} °C</p>}
     </details>
   )
 }

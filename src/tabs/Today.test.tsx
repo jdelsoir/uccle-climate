@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import { vi } from 'vitest'
 import Today from './Today'
+import { todayMMDD } from '../lib/format'
 
 // Mock Recharts ResponsiveContainer to avoid jsdom width(0) warnings
 vi.mock('recharts', async (importOriginal) => {
@@ -36,7 +37,7 @@ test('shows rank badge using live temp', async () => {
 
 test('shows anomaly vs 1991-2020 normal for today', async () => {
   const daynorm = {
-    '1991-2020': [{ doy: 176, mmdd: '0625', normal: 18.5, p10: 14.0, p90: 23.0 }],
+    '1991-2020': [{ doy: 176, mmdd: todayMMDD(), normal: 18.5, p10: 14.0, p90: 23.0 }],
     '1961-1990': [],
   }
   vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) =>

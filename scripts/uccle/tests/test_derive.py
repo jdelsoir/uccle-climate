@@ -147,3 +147,17 @@ def test_monthly_means_and_completeness():
     assert mm[(2000, 6)] == {"mean": 18.0, "n": 30, "complete": True}
     assert mm[(2026, 6)]["complete"] is False
     assert mm[(2026, 6)]["mean"] == 20.0
+
+def test_month_data_records_normal_thennow():
+    from scripts.uccle.derive import month_data
+    recs = (month_recs(1990, 6, 30, 15.0) + month_recs(2000, 6, 30, 18.0)
+            + month_recs(2020, 6, 30, 20.0) + month_recs(2026, 6, 26, 99.0))  # 2026 partial → excluded from records/normal
+    md = month_data(recs, baseline=(1990, 2020), early=(1833, 1990), recent=(2000, 2025))
+    june = md["06"]
+    assert june["mm"] == "06"
+    assert {"year": 2020, "mean": 20.0, "complete": True} in june["series"]
+    assert any(s["year"] == 2026 and s["complete"] is False for s in june["series"])
+    assert june["recordWarm"] == {"year": 2020, "v": 20.0}   # 2026 excluded
+    assert june["recordCold"] == {"year": 1990, "v": 15.0}
+    assert june["normal"] == round((15.0 + 18.0 + 20.0) / 3, 2)  # complete months in 1990-2020
+    assert june["thenNow"]["early"]["mean"] == 15.0 and june["thenNow"]["recent"]["mean"] == 19.0

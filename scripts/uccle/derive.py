@@ -181,3 +181,31 @@ def monthly_means(recs):
         dim = calendar.monthrange(y, m)[1]
         out[(y, m)] = {"mean": round(sum(vals) / len(vals), 2), "n": len(vals), "complete": len(vals) >= dim - 3}
     return out
+
+def month_data(recs, baseline=(1991, 2020), early=(1833, 1900), recent=(1996, 2025)):
+    mm = monthly_means(recs)
+    by_month = defaultdict(list)               # month -> [(year, info)]
+    for (y, m), info in mm.items():
+        by_month[m].append((y, info))
+    out = {}
+    for m in range(1, 13):
+        entries = sorted(by_month.get(m, []), key=lambda t: t[0])
+        series = [{"year": y, "mean": info["mean"], "complete": info["complete"]} for y, info in entries]
+        complete = [(y, info["mean"]) for y, info in entries if info["complete"]]
+        warm = max(complete, key=lambda t: t[1]) if complete else None
+        cold = min(complete, key=lambda t: t[1]) if complete else None
+        base_vals = [v for y, v in complete if baseline[0] <= y <= baseline[1]]
+        early_vals = [v for y, v in complete if early[0] <= y <= early[1]]
+        recent_vals = [v for y, v in complete if recent[0] <= y <= recent[1]]
+        out[f"{m:02d}"] = {
+            "mm": f"{m:02d}",
+            "series": series,
+            "recordWarm": {"year": warm[0], "v": warm[1]} if warm else None,
+            "recordCold": {"year": cold[0], "v": cold[1]} if cold else None,
+            "normal": round(sum(base_vals) / len(base_vals), 2) if base_vals else None,
+            "thenNow": {
+                "early": {"from": early[0], "to": early[1], "mean": round(sum(early_vals) / len(early_vals), 2) if early_vals else None},
+                "recent": {"from": recent[0], "to": recent[1], "mean": round(sum(recent_vals) / len(recent_vals), 2) if recent_vals else None},
+            },
+        }
+    return out

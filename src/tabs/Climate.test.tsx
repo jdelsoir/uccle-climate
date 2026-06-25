@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { vi } from 'vitest'
 import Climate from './Climate'
 
@@ -39,10 +39,13 @@ test('renders counter cards', async () => {
   render(<Climate />)
   await waitFor(() => expect(screen.getByText(/summer days/i)).toBeInTheDocument())
   expect(screen.getByText(/tropical nights/i)).toBeInTheDocument()
-  // Headline uses the latest COMPLETE year (2000 → 30), not the incomplete 2001 (→ 9)
+  // Defaults to the latest year (2001, partial) → SU 9, flagged "(so far)"
+  expect(screen.getByText('9')).toBeInTheDocument()
+  expect(screen.getAllByText(/in 2001 \(so far\)/).length).toBe(5)
+  // Year selector switches to a complete year
+  fireEvent.change(screen.getByLabelText('Year'), { target: { value: '2000' } })
   expect(screen.getByText('30')).toBeInTheDocument()
   expect(screen.getAllByText(/in 2000/).length).toBe(5)
-  expect(screen.queryByText('9')).not.toBeInTheDocument()
 })
 
 afterEach(() => vi.unstubAllGlobals())

@@ -33,4 +33,16 @@ test('birth year input produces lifetime warming readout', async () => {
   await waitFor(() => expect(screen.getByText(/since you were born/i)).toBeInTheDocument())
 })
 
+test('share card contains no birth-year PII but shows location', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => summary }))
+  render(<Me />)
+  await waitFor(() => screen.getByLabelText(/birth year/i))
+  fireEvent.change(screen.getByLabelText(/birth year/i), { target: { value: '1990' } })
+  await waitFor(() => screen.getByText(/since you were born/i))
+  const card = document.querySelector('#share-card')
+  expect(card).not.toBeNull()
+  expect(card!.textContent).not.toContain('1990')
+  expect(card!.textContent).toContain('Uccle, Brussels')
+})
+
 afterEach(() => vi.unstubAllGlobals())

@@ -13,8 +13,9 @@ A Progressive Web App (PWA) visualising how Brussels temperature has changed sin
 |-----|-------------|
 | Today | Live temperature + daily historical records |
 | Trends | Annual warming trend since 1833 |
-| Extremes | Hottest / coldest days and runs |
-| Counters | Yearly counts of heat/cold threshold events |
+| Climate | Decadal averages and climate normals |
+| Me | Your lifetime warming — birthday stripes |
+| About | Data sources and methods |
 
 ## Run locally
 
@@ -57,6 +58,6 @@ A second workflow (`.github/workflows/refresh.yml`) re-runs the full deploy ever
 |--------|----------------|
 | **NOAA GHCN-Daily** (Global Historical Climatology Network — Daily) | Public domain. Menne et al. (2012). [doi:10.1175/JTECH-D-11-00103.1](https://doi.org/10.1175/JTECH-D-11-00103.1) |
 | **Open-Meteo** ([open-meteo.com](https://open-meteo.com)) | Free for non-commercial use; attribution required. |
-| **RMI / KMI Belgium** — Uccle reference station | Historical observations contributed to GHCN; Uccle (station ID UCE00100590) is the official Belgian climate reference. |
+| **RMI / KMI Belgium** — Uccle reference station | Historical observations contributed to GHCN; Uccle (station ID BE000006447) is the official Belgian climate reference. |
 
 > Open-Meteo API is used under its free non-commercial tier. If you deploy a high-traffic or commercial service, review [Open-Meteo's licensing](https://open-meteo.com/en/terms).

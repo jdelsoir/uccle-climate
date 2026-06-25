@@ -24,4 +24,20 @@ test('shows rank badge using live temp', async () => {
   expect(screen.getByText(/34.8/)).toBeInTheDocument()  // record high
 })
 
+test('shows anomaly vs 1991-2020 normal for today', async () => {
+  const daynorm = {
+    '1991-2020': [{ doy: 176, mmdd: '0625', normal: 18.5, p10: 14.0, p90: 23.0 }],
+    '1961-1990': [],
+  }
+  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) =>
+    Promise.resolve({ ok: true, json: async () =>
+      u.includes('open-meteo')
+        ? { current: { temperature_2m: 20.5 }, daily: { temperature_2m_max: [21], temperature_2m_min: [15] } }
+        : u.includes('daynorm.json')
+          ? daynorm
+          : thisday })))
+  render(<Today />)
+  await waitFor(() => expect(screen.getByText(/1991.2020 normal/i)).toBeInTheDocument())
+})
+
 afterEach(() => vi.unstubAllGlobals())

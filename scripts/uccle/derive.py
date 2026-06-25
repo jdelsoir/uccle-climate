@@ -78,6 +78,81 @@ def _window_mean(rs, lo, hi):
     vals = [r["tmean"] for r in rs if lo <= r["date"].year <= hi]
     return round(sum(vals) / len(vals), 2) if vals else None
 
+def _per_year(recs):
+    by = defaultdict(list)
+    for r in recs:
+        by[r["date"].year].append(r)
+    return by
+
+def threshold_counters(recs):
+    by = _per_year(recs)
+    res = {"SU": [], "hot30": [], "TR": [], "FD": [], "ID": []}
+    for y in sorted(by):
+        rs = by[y]
+        res["SU"].append({"year": y, "n": sum(1 for r in rs if r["tmax"] >= 25)})
+        res["hot30"].append({"year": y, "n": sum(1 for r in rs if r["tmax"] >= 30)})
+        res["TR"].append({"year": y, "n": sum(1 for r in rs if r["tmin"] >= 20)})
+        res["FD"].append({"year": y, "n": sum(1 for r in rs if r["tmin"] < 0)})
+        res["ID"].append({"year": y, "n": sum(1 for r in rs if r["tmax"] < 0)})
+    return res
+
+def heatwave_days(recs):
+    by = _per_year(recs)
+    out = []
+    for y in sorted(by):
+        days = {r["date"]: r for r in by[y]}
+        ordered = sorted(days)
+        total = 0
+        run = []
+
+        def flush(run):
+            return len(run) if (len(run) >= 5 and sum(1 for r in run if r["tmax"] >= 30) >= 3) else 0
+
+        prev = None
+        for d in ordered:
+            r = days[d]
+            consecutive = prev is not None and (d - prev).days == 1
+            if r["tmax"] >= 25 and (not run or consecutive):
+                run.append(r)
+            else:
+                total += flush(run)
+                run = [r] if r["tmax"] >= 25 else []
+            prev = d
+        total += flush(run)
+        out.append({"year": y, "n": total})
+    return out
+
+def growing_season(recs):
+    by = _per_year(recs)
+    out = []
+    for y in sorted(by):
+        rs = sorted(by[y], key=lambda r: r["date"])
+        means = [(r["date"], r["tmean"]) for r in rs]
+
+        def first_run(seq, cond, after_doy=0):
+            streak = 0
+            for d, t in seq:
+                doy = d.timetuple().tm_yday
+                if doy < after_doy:
+                    streak = 0
+                    continue
+                streak = streak + 1 if cond(t) else 0
+                if streak >= 6:
+                    return d - dt.timedelta(days=5)
+            return None
+
+        start = first_run(means, lambda t: t > 5)
+        end = first_run(means, lambda t: t < 5, after_doy=182)
+        n = (end - start).days if (start and end and end > start) else 0
+        out.append({"year": y, "n": n})
+    return out
+
+def rankings(annual):
+    valid = [{"year": a["year"], "mean": a["mean"]} for a in annual if not a["incomplete"]]
+    warmest = sorted(valid, key=lambda a: a["mean"], reverse=True)
+    coldest = sorted(valid, key=lambda a: a["mean"])
+    return {"warmest": warmest, "coldest": coldest}
+
 def per_date(recs, early=(1833, 1900), recent=(1996, 2025)):
     by_md = defaultdict(list)
     for r in recs:

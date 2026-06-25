@@ -1,6 +1,10 @@
 import datetime as dt
 import pytest
-from scripts.uccle.derive import annual_means, baseline_mean, anomalies, decadal_means, ols_slope_per_decade, percentile, doy_normals, per_date
+from scripts.uccle.derive import annual_means, baseline_mean, anomalies, decadal_means, ols_slope_per_decade, percentile, doy_normals, per_date, threshold_counters, heatwave_days, growing_season, rankings
+
+def day(y, m, d, tmax, tmin):
+    return {"date": dt.date(y, m, d), "tmax": tmax, "tmin": tmin, "tmean": (tmax + tmin) / 2}
+
 
 def recs_for(year, n, tmean):
     out = []
@@ -71,3 +75,30 @@ def test_per_date_records_and_series():
     assert d["series"][0] == {"year": 1850, "tmax": 24.0, "tmin": 12.0}
     assert d["thenNow"]["early"]["mean"] == 18.0
     assert d["thenNow"]["recent"]["mean"] == 24.0
+
+
+def test_threshold_counters():
+    recs = [day(2000, 7, 1, 26, 15), day(2000, 7, 2, 31, 21), day(2000, 1, 1, -2, -5), day(2000, 1, 2, 3, 1)]
+    c = threshold_counters(recs)
+    assert dict(year=2000, n=2) in c["SU"]      # 26 and 31 ≥25
+    assert dict(year=2000, n=1) in c["hot30"]   # 31 ≥30
+    assert dict(year=2000, n=1) in c["TR"]      # tmin 21 ≥20
+    # FD: only tmin=-5 is <0; tmin=1 is NOT <0 → n=1
+    assert [x for x in c["FD"] if x["year"] == 2000][0]["n"] == 1
+    assert [x for x in c["ID"] if x["year"] == 2000][0]["n"] == 1   # tmax -2 <0
+
+
+def test_heatwave_rmi_rule():
+    # 5 consecutive ≥25 incl 3 ≥30 → qualifies (5 days)
+    recs = [day(2000, 7, i, 30 if i <= 3 else 26, 18) for i in range(1, 6)]
+    assert heatwave_days(recs) == [{"year": 2000, "n": 5}]
+    # only 4 days → no heatwave
+    recs2 = [day(2001, 7, i, 31, 18) for i in range(1, 5)]
+    assert heatwave_days(recs2) == [{"year": 2001, "n": 0}]
+
+
+def test_rankings():
+    am = [{"year": 2000, "mean": 10.0, "incomplete": False}, {"year": 2001, "mean": 12.0, "incomplete": False}]
+    r = rankings(am)
+    assert r["warmest"][0] == {"year": 2001, "mean": 12.0}
+    assert r["coldest"][0] == {"year": 2000, "mean": 10.0}

@@ -95,6 +95,13 @@ def test_heatwave_rmi_rule():
     # only 4 days → no heatwave
     recs2 = [day(2001, 7, i, 31, 18) for i in range(1, 5)]
     assert heatwave_days(recs2) == [{"year": 2001, "n": 0}]
+    # 5-day run with ZERO days ≥30 → must NOT qualify (fails ≥3-hot-days criterion)
+    recs3 = [day(2002, 7, i, 26, 18) for i in range(1, 6)]
+    assert heatwave_days(recs3) == [{"year": 2002, "n": 0}]
+    # Two qualifying 5-day runs separated by gap → days accumulate (5+5=10)
+    runA = [day(2003, 7, i, 31, 18) for i in range(1, 6)]
+    runB = [day(2003, 8, i, 31, 18) for i in range(1, 6)]
+    assert heatwave_days(runA + runB) == [{"year": 2003, "n": 10}]
 
 
 def test_rankings():
@@ -109,7 +116,6 @@ def test_growing_season():
     # - first 6-day warm run (Tmean>5) starts Jan 1 (days 1-6)
     # - first 6-day cold run (Tmean<5) after doy>=182 starts on day 182 (Jul 1)
     # GSL = (day 182) - (day 1) = 181 days
-    import datetime as dt
     recs = []
     year = 2000
     start = dt.date(year, 1, 1)

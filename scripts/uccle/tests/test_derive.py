@@ -40,3 +40,8 @@ def test_ols_slope_per_decade():
     for i, y in enumerate(range(2000, 2010)):
         am.append({"year": y, "mean": 10.0 + 0.1 * i, "tmin": 0, "tmax": 0, "incomplete": False})
     assert ols_slope_per_decade(am) == 1.0
+
+def test_ols_slope_too_few_points_raises():
+    am = [{"year": 2000, "mean": 10.0, "tmin": 0, "tmax": 0, "incomplete": False}]
+    with pytest.raises(ValueError):
+        ols_slope_per_decade(am)

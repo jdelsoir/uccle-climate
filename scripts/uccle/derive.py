@@ -35,6 +35,8 @@ def ols_slope_per_decade(annual, since=None):
     pts = [(a["year"], a["mean"]) for a in annual
            if not a["incomplete"] and (since is None or a["year"] >= since)]
     n = len(pts)
+    if n < 2:
+        raise ValueError(f"Need >=2 complete years for slope, got {n}")
     sx = sum(x for x, _ in pts); sy = sum(y for _, y in pts)
     sxx = sum(x * x for x, _ in pts); sxy = sum(x * y for x, y in pts)
     slope = (n * sxy - sx * sy) / (n * sxx - sx * sx)

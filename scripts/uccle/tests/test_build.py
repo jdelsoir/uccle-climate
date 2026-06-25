@@ -1,7 +1,7 @@
 import json
 import datetime as dt
 from scripts.uccle.build_data import build, merge_archive
-from scripts.uccle.tests.test_derive import day, recs_for
+from scripts.uccle.tests.test_derive import day, recs_for, month_recs
 
 def test_build_emits_expected_files(tmp_path):
     recs = (recs_for(1991, 365, 10.0) + recs_for(2000, 365, 11.0)
@@ -49,3 +49,12 @@ def test_build_fills_incomplete_year_from_archive(tmp_path):
     summary = json.loads((tmp_path / "summary.json").read_text())
     y2010 = next(a for a in summary["annual"] if a["year"] == 2010)
     assert y2010["incomplete"] is False  # archive fill makes it a complete year
+
+
+def test_build_emits_month_files(tmp_path):
+    recs = month_recs(2000, 6, 30, 18.0) + month_recs(2020, 6, 30, 20.0)
+    build(records=recs, out_dir=str(tmp_path))
+    june = json.loads((tmp_path / "month" / "06.json").read_text())
+    assert june["mm"] == "06"
+    assert june["recordWarm"] == {"year": 2020, "v": 20.0}
+    assert (tmp_path / "month" / "01.json").exists()  # all 12 emitted

@@ -98,6 +98,9 @@ def build(text=None, records=None, archive=None, out_dir="public/data"):
            {k: derive.doy_normals(recs, *v) for k, v in BASELINES.items()})
     for mmdd, payload in per_date.items():
         _write(os.path.join(out_dir, "thisday", f"{mmdd}.json"), payload)
+    os.makedirs(os.path.join(out_dir, "month"), exist_ok=True)
+    for mmkey, payload in derive.month_data(recs).items():
+        _write(os.path.join(out_dir, "month", f"{mmkey}.json"), payload)
 
 
 def _safe_warming_rate(annual):

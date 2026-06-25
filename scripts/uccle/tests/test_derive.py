@@ -1,6 +1,6 @@
 import datetime as dt
 import pytest
-from scripts.uccle.derive import annual_means, baseline_mean, anomalies, decadal_means, ols_slope_per_decade
+from scripts.uccle.derive import annual_means, baseline_mean, anomalies, decadal_means, ols_slope_per_decade, percentile, doy_normals
 
 def recs_for(year, n, tmean):
     out = []
@@ -45,3 +45,16 @@ def test_ols_slope_too_few_points_raises():
     am = [{"year": 2000, "mean": 10.0, "tmin": 0, "tmax": 0, "incomplete": False}]
     with pytest.raises(ValueError):
         ols_slope_per_decade(am)
+
+def test_percentile_linear():
+    assert percentile([0, 10], 50) == 5.0
+    assert percentile([0, 10], 10) == 1.0
+
+def test_doy_normals_length_and_value():
+    # constant 10° everywhere → every normal 10, 366 entries (leap calendar)
+    recs = recs_for(1991, 365, 10.0)
+    for y in range(1992, 2021):
+        recs += recs_for(y, 365, 10.0)
+    dn = doy_normals(recs, 1991, 2020, window=7)
+    assert len(dn) == 366
+    assert dn[0]["mmdd"] == "0101" and dn[0]["normal"] == 10.0

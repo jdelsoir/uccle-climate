@@ -26,7 +26,7 @@ export default function YearView({ year }: { year: number }) {
           <>
             <div className="mt-1 flex items-end gap-3">
               <span className="text-[40px] font-extrabold leading-none">{fmtTemp(a.mean)}</span>
-              <span className="pb-1.5 text-sm text-muted">{a.incomplete ? '(so far)' : ''}</span>
+              {a.incomplete && <span className="pb-1.5 text-sm text-muted">(so far)</span>}
             </div>
             {rank && !a.incomplete && <p className="mt-3 inline-block rounded-full bg-badge-bg px-3 py-1 text-xs font-semibold text-badge-fg">
               {ordinal(rank)} warmest year in {total} years</p>}

@@ -17,7 +17,16 @@ afterEach(() => vi.unstubAllGlobals())
 
 test('shows selected year mean + rank', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => summary }))
-  render(<YearView year={2020} />)
-  await waitFor(() => expect(screen.getAllByText(/12\.1 °C/).length).toBeGreaterThan(0))
-  expect(screen.getByText(/1st warmest year/i)).toBeInTheDocument()  // 2020 is warmest
+  render(<YearView year={2000} />)
+  await waitFor(() => expect(screen.getAllByText('10.5 °C')).toHaveLength(2))  // headline + coldest record
+  expect(screen.getByText(/2nd warmest year/i)).toBeInTheDocument()  // 2000 is 2nd warmest
+})
+
+test('incomplete year shows (so far) and no rank badge', async () => {
+  const s = { ...summary, annual: [...summary.annual, { year: 2026, mean: 13.0, tmin: 9, tmax: 18, incomplete: true }] }
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => s }))
+  render(<YearView year={2026} />)
+  await waitFor(() => expect(screen.getByText('13.0 °C')).toBeInTheDocument())
+  expect(screen.getByText(/so far/i)).toBeInTheDocument()
+  expect(screen.queryByText(/warmest year in/i)).not.toBeInTheDocument()  // rank badge suppressed
 })

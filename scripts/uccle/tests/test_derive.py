@@ -1,4 +1,5 @@
 import datetime as dt
+import pytest
 from scripts.uccle.derive import annual_means, baseline_mean, anomalies
 
 def recs_for(year, n, tmean):
@@ -21,3 +22,8 @@ def test_baseline_and_anomaly_excludes_incomplete():
     assert base == 11.0
     an = anomalies(am, base)
     assert {"year": 2000, "v": -1.0} in an
+
+def test_baseline_mean_empty_range_raises():
+    am = [{"year": 2000, "mean": 10.0, "tmin": 0, "tmax": 0, "incomplete": True}]
+    with pytest.raises(ValueError):
+        baseline_mean(am, 1991, 2020)

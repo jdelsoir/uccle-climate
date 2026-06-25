@@ -18,6 +18,8 @@ def annual_means(recs, min_days=330):
 
 def baseline_mean(annual, start, end):
     vals = [a["mean"] for a in annual if start <= a["year"] <= end and not a["incomplete"]]
+    if not vals:
+        raise ValueError(f"No complete years in baseline range {start}-{end}")
     return round(sum(vals) / len(vals), 2)
 
 def anomalies(annual, base):

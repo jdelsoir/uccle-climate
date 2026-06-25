@@ -7,6 +7,7 @@ RAMP = [
     (247, 144, 80), (239, 109, 67), (226, 74, 53), (209, 47, 39), (184, 33, 31), (158, 1, 66),
 ]
 
+
 def make(size: int, out: str) -> None:
     img = Image.new("RGB", (size, size))
     d = ImageDraw.Draw(img)
@@ -25,6 +26,7 @@ def make(size: int, out: str) -> None:
     cx, cy = px[-1]
     d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(255, 255, 255))
     img.save(out)
+
 
 if __name__ == "__main__":
     make(512, "public/icons/icon-512.png")

@@ -1,2 +1,2 @@
 pytest
-pillow
+pillow>=10,<12

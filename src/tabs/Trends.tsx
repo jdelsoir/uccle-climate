@@ -20,7 +20,7 @@ export default function Trends() {
       <h2 className="text-2xl font-extrabold tracking-tight">Warming Trends</h2>
 
       <div className="rounded-xl border border-border bg-surface p-4">
-        <p className="mb-2 text-[11px] uppercase tracking-[0.09em] text-muted">Warming stripes · every year since 1833</p>
+        <p className="mb-2 text-[11px] uppercase tracking-[0.09em] text-muted">Warming stripes · every year since {`${anom[0]?.year ?? 1833}`}</p>
         <Stripes points={anom.map(a => ({ year: a.year, v: a.v }))} />
         <div className="mt-2 flex justify-between text-xs text-muted"><span>{anom[0]?.year}</span><span>{anom[anom.length - 1]?.year}</span></div>
       </div>

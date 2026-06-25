@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { Scatter, XAxis, YAxis, ResponsiveContainer, ComposedChart, CartesianGrid, Tooltip } from 'recharts'
+import { Flame, Snowflake } from 'lucide-react'
 import { useThisDay } from '../data/useThisDay'
 import { useTodayTemp } from '../data/useTodayTemp'
 import { useDayNorm } from '../data/useDayNorm'
+import { useSummary } from '../data/useSummary'
 import { todayMMDD, fmtTemp } from '../lib/format'
 import { rankOf, meanAnomaly } from '../lib/stats'
 import DotColumn from '../components/DotColumn'
@@ -15,6 +17,7 @@ export default function Today() {
   const { data, loading, error } = useThisDay(mmdd)
   const live = useTodayTemp()
   const dayNorm = useDayNorm()
+  const { summary } = useSummary()
   if (loading) return <Loading label="Loading today…" />
   if (error || !data) return <ErrorState label="Could not load this date." />
   const maxima = data.series.map(s => s.tmax)
@@ -23,11 +26,21 @@ export default function Today() {
   const norms = dayNorm.data?.['1991-2020']
   const entry = norms?.find(n => n.mmdd === mmdd)
 
+  // Is today setting a new all-time record for this calendar day?
+  const isHotRecord = live.data != null && live.data.tmax > data.recordHigh.v
+  const isColdRecord = live.data != null && live.data.tmin < data.recordLow.v
+  const heroClass = isHotRecord
+    ? 'rounded-xl border-2 border-warm bg-warm/5 p-5'
+    : isColdRecord
+      ? 'rounded-xl border-2 border-accent bg-accent/5 p-5'
+      : 'rounded-xl border border-border bg-surface p-5'
+  const recordCount = summary?.records ? (isHotRecord ? summary.records.highs : summary.records.lows) : 0
+
   return (
     <section className="fade-in space-y-4">
       <h2 className="text-2xl font-extrabold tracking-tight">This Day in History</h2>
 
-      <div className="rounded-xl border border-border bg-surface p-5">
+      <div className={heroClass}>
         <p className="text-[11px] uppercase tracking-[0.09em] text-muted">Today · Uccle, Brussels</p>
         {live.error ? (
           <p className="mt-1 text-sm text-muted">Live temperature unavailable — showing records only.</p>
@@ -42,6 +55,15 @@ export default function Today() {
         {r && (
           <p className="mt-3 inline-block rounded-full bg-badge-bg px-3 py-1 text-xs font-semibold text-badge-fg">
             {ordinal(r.rank)} warmest on this date in {r.total} years · {ordinal(Math.round(r.pct))} percentile
+          </p>
+        )}
+        {(isHotRecord || isColdRecord) && (
+          <p className={`mt-3 flex items-center gap-2 text-sm font-semibold ${isHotRecord ? 'text-warm' : 'text-accent'}`}>
+            {isHotRecord ? <Flame size={16} aria-hidden /> : <Snowflake size={16} aria-hidden />}
+            <span>
+              {isHotRecord ? 'New record high for this date!' : 'New record low for this date!'}
+              {recordCount > 0 && ` ${recordCount} ${isHotRecord ? 'heat' : 'cold'} records set in ${summary!.records.year}.`}
+            </span>
           </p>
         )}
         {entry?.normal != null && live.data != null && (() => {

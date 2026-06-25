@@ -22,6 +22,8 @@ test('shows rank badge using live temp', async () => {
   render(<Today />)
   await waitFor(() => expect(screen.getByText(/warmest/i)).toBeInTheDocument())
   expect(screen.getByText(/34.8/)).toBeInTheDocument()  // record high
+  // today's live max (36) beats the record high (34.8) → record banner shows
+  expect(screen.getByText(/record high for this date/i)).toBeInTheDocument()
 })
 
 test('shows anomaly vs 1991-2020 normal for today', async () => {

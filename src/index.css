@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+/* Dark mode driven by a .dark class on <html> (not the media default). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --bg:#f6f8fa; --surface:#ffffff; --surface-2:#f8fafc; --fg:#1f2933; --muted:#64748b;
+  --border:#e5e9f0; --accent:#2563eb; --accent-soft:#eff4ff; --warm:#dc2626;
+  --badge-bg:#fee2e2; --badge-fg:#b91c1c;
+}
+.dark {
+  --bg:#0f141b; --surface:#161d27; --surface-2:#0f141b; --fg:#e6edf3; --muted:#8b98a9;
+  --border:#232d3a; --accent:#3b82f6; --accent-soft:rgba(59,130,246,.14); --warm:#f87171;
+  --badge-bg:rgba(248,113,113,.14); --badge-fg:#fca5a5;
+}
+
+/* `inline` makes the generated utilities reference the vars at runtime, so they flip with .dark. */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-warm: var(--warm);
+  --color-badge-bg: var(--badge-bg);
+  --color-badge-fg: var(--badge-fg);
+}
+
+html, body { background: var(--bg); color: var(--fg); }
+body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+
+@keyframes fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.fade-in { animation: fade-in .25s ease both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-in { animation: none; }
+  *, *::before, *::after { transition-duration: .001ms !important; animation-duration: .001ms !important; }
+}

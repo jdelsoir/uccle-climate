@@ -23,3 +23,11 @@ export interface ThisDay {
   series: { year: number; tmax: number; tmin: number }[]
   thenNow: { early: { from: number; to: number; mean: number | null }; recent: { from: number; to: number; mean: number | null } }
 }
+export interface MonthData {
+  mm: string
+  series: { year: number; mean: number; complete: boolean }[]
+  recordWarm: { year: number; v: number } | null
+  recordCold: { year: number; v: number } | null
+  normal: number | null
+  thenNow: { early: { from: number; to: number; mean: number | null }; recent: { from: number; to: number; mean: number | null } }
+}

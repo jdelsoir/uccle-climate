@@ -13,3 +13,9 @@ export const fmtDate = (iso: string): string => {
   const [y, m, d] = iso.split('-').map(Number)
   return `${d} ${MONTHS[m - 1]} ${y}`
 }
+
+const MONTHS_FULL = ['January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December']
+export const fmtMonth = (mm: string): string => MONTHS_FULL[Number(mm) - 1]
+export const fmtDayLabel = (mmdd: string): string =>
+  `${Number(mmdd.slice(2))} ${fmtMonth(mmdd.slice(0, 2))}`

@@ -8,9 +8,12 @@ export default function ShareButton({ targetId }: { targetId: string }) {
       onClick={async () => {
         if (busy.current) return
         busy.current = true
-        const node = document.getElementById(targetId)
-        if (node) await shareNode(node, 'uccle-climate.png')
-        busy.current = false
+        try {
+          const node = document.getElementById(targetId)
+          if (node) await shareNode(node, 'uccle-climate.png')
+        } finally {
+          busy.current = false
+        }
       }}
     >
       Share

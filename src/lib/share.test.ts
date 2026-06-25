@@ -44,28 +44,30 @@ describe('shareNode', () => {
     const originalCanShare = navigator.canShare
     const originalShare = (navigator as any).share
 
-    Object.defineProperty(navigator, 'canShare', {
-      value: vi.fn().mockReturnValue(true),
-      configurable: true,
-    })
-    Object.defineProperty(navigator, 'share', {
-      value: mockShare,
-      configurable: true,
-    })
+    try {
+      Object.defineProperty(navigator, 'canShare', {
+        value: vi.fn().mockReturnValue(true),
+        configurable: true,
+      })
+      Object.defineProperty(navigator, 'share', {
+        value: mockShare,
+        configurable: true,
+      })
 
-    const node = document.createElement('div')
-    await shareNode(node, 'uccle.png')
+      const node = document.createElement('div')
+      await shareNode(node, 'uccle.png')
 
-    expect(mockShare).toHaveBeenCalled()
-
-    // Restore
-    Object.defineProperty(navigator, 'canShare', {
-      value: originalCanShare,
-      configurable: true,
-    })
-    Object.defineProperty(navigator, 'share', {
-      value: originalShare,
-      configurable: true,
-    })
+      expect(mockShare).toHaveBeenCalled()
+    } finally {
+      // Restore
+      Object.defineProperty(navigator, 'canShare', {
+        value: originalCanShare,
+        configurable: true,
+      })
+      Object.defineProperty(navigator, 'share', {
+        value: originalShare,
+        configurable: true,
+      })
+    }
   })
 })

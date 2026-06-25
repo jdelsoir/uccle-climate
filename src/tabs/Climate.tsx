@@ -16,12 +16,15 @@ export default function Climate() {
   const { summary, loading, error } = useSummary()
   if (loading) return <Loading label="Loading climate impact…" />
   if (error || !summary) return <ErrorState label="Could not load data." />
+  // Only count years with complete data — partial/incomplete years (the current
+  // year, or coverage-gap years) would understate the counters.
+  const completeYears = new Set(summary.annual.filter(a => !a.incomplete).map(a => a.year))
   return (
     <section className="fade-in space-y-4">
       <h2 className="text-2xl font-extrabold tracking-tight">Climate Impact</h2>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {META.map(({ k, title, blurb, Icon }) => {
-          const series = summary.counters[k] as CounterPoint[]
+          const series = (summary.counters[k] as CounterPoint[]).filter(p => completeYears.has(p.year))
           const last = series[series.length - 1]
           return (
             <article key={k} className="rounded-xl border border-border bg-surface p-4">

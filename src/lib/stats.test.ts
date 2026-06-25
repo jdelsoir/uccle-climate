@@ -11,6 +11,17 @@ test('rankOf: coldest', () => {
   expect(rankOf(10, [10, 20, 30]).rank).toBe(3)
 })
 
+test('rankOf: percentile never exceeds 100 when the value beats all', () => {
+  const r = rankOf(40, [10, 20, 30]) // hotter than every historical value
+  expect(r.rank).toBe(1)
+  expect(r.pct).toBeLessThanOrEqual(100)
+  expect(Math.round(r.pct)).toBe(100)
+})
+
+test('rankOf: percentile never below 0 when colder than all', () => {
+  expect(rankOf(5, [10, 20, 30]).pct).toBeGreaterThanOrEqual(0)
+})
+
 test('meanAnomaly: uses the day mean vs the normal, 1 decimal', () => {
   // mean(36.8, 26.2) = 31.5; 31.5 - 17.51 = 13.99 → 14.0
   expect(meanAnomaly(36.8, 26.2, 17.51)).toBe(14.0)

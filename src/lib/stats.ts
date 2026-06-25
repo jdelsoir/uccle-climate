@@ -3,7 +3,8 @@ export function rankOf(value: number, values: number[]) {
   const warmer = values.filter(v => v > value).length
   const rank = warmer + 1                 // 1 = warmest
   const colder = values.filter(v => v < value).length
-  const pct = total > 1 ? (colder / (total - 1)) * 100 : 100
+  // Clamp to [0,100]: a value beating every entry (e.g. a record) must not exceed 100.
+  const pct = total > 1 ? Math.max(0, Math.min(100, (colder / (total - 1)) * 100)) : 100
   return { rank, total, pct }
 }
 

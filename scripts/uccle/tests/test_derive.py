@@ -1,6 +1,6 @@
 import datetime as dt
 import pytest
-from scripts.uccle.derive import annual_means, baseline_mean, anomalies, decadal_means, ols_slope_per_decade, percentile, doy_normals
+from scripts.uccle.derive import annual_means, baseline_mean, anomalies, decadal_means, ols_slope_per_decade, percentile, doy_normals, per_date
 
 def recs_for(year, n, tmean):
     out = []
@@ -58,3 +58,16 @@ def test_doy_normals_length_and_value():
     dn = doy_normals(recs, 1991, 2020, window=7)
     assert len(dn) == 366
     assert dn[0]["mmdd"] == "0101" and dn[0]["normal"] == 10.0
+
+def test_per_date_records_and_series():
+    recs = [
+        {"date": dt.date(1850,6,25), "tmax": 24.0, "tmin": 12.0, "tmean": 18.0},
+        {"date": dt.date(2020,6,25), "tmax": 30.0, "tmin": 18.0, "tmean": 24.0},
+    ]
+    pd = per_date(recs, early=(1833,1900), recent=(1996,2025))
+    d = pd["0625"]
+    assert d["recordHigh"] == {"v": 30.0, "year": 2020}
+    assert d["recordLow"] == {"v": 12.0, "year": 1850}
+    assert d["series"][0] == {"year": 1850, "tmax": 24.0, "tmin": 12.0}
+    assert d["thenNow"]["early"]["mean"] == 18.0
+    assert d["thenNow"]["recent"]["mean"] == 24.0

@@ -73,3 +73,27 @@ def doy_normals(recs, start, end, window=7):
             "p90": round(percentile(s, 90), 2) if vals else None,
         })
     return out
+
+def _window_mean(rs, lo, hi):
+    vals = [r["tmean"] for r in rs if lo <= r["date"].year <= hi]
+    return round(sum(vals) / len(vals), 2) if vals else None
+
+def per_date(recs, early=(1833, 1900), recent=(1996, 2025)):
+    by_md = defaultdict(list)
+    for r in recs:
+        by_md[(r["date"].month, r["date"].day)].append(r)
+    out = {}
+    for (m, d), rs in by_md.items():
+        rs = sorted(rs, key=lambda r: r["date"].year)
+        hi = max(rs, key=lambda r: r["tmax"]); lo = min(rs, key=lambda r: r["tmin"])
+        out[f"{m:02d}{d:02d}"] = {
+            "mmdd": f"{m:02d}{d:02d}",
+            "recordHigh": {"v": hi["tmax"], "year": hi["date"].year},
+            "recordLow": {"v": lo["tmin"], "year": lo["date"].year},
+            "series": [{"year": r["date"].year, "tmax": r["tmax"], "tmin": r["tmin"]} for r in rs],
+            "thenNow": {
+                "early": {"from": early[0], "to": early[1], "mean": _window_mean(rs, *early)},
+                "recent": {"from": recent[0], "to": recent[1], "mean": _window_mean(rs, *recent)},
+            },
+        }
+    return out

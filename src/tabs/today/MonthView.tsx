@@ -29,7 +29,7 @@ export default function MonthView({ mm, currentYear }: { mm: string; currentYear
             {rank && cur.complete && <p className="mt-3 inline-block rounded-full bg-badge-bg px-3 py-1 text-xs font-semibold text-badge-fg">
               {ordinal(rank)} warmest {name} in {complete.length} years</p>}
             {anomaly != null && <p className="mt-3 text-sm text-muted">
-              <strong className="text-fg">{Math.abs(anomaly)} °C {anomaly >= 0 ? 'above' : 'below'}</strong> the 1991–2020 {name} normal ({data.normal} °C).</p>}
+              <strong className="text-fg">{Math.abs(anomaly).toFixed(1)} °C {anomaly > 0 ? 'above' : anomaly < 0 ? 'below' : 'equal to'}</strong> the 1991–2020 {name} normal ({data.normal} °C).</p>}
           </>
         ) : <p className="mt-2 text-sm text-muted">No data for {name} {currentYear} yet.</p>}
       </div>

@@ -24,6 +24,8 @@ test('shows rank badge using live temp', async () => {
   expect(screen.getByText(/34.8/)).toBeInTheDocument()  // record high
   // today's live max (36) beats the record high (34.8) → record banner shows
   expect(screen.getByText(/record high for this date/i)).toBeInTheDocument()
+  // status line drops the percentile
+  expect(screen.queryByText(/percentile/i)).not.toBeInTheDocument()
   // period selector present, default to first option (2001–Now)
   const period = screen.getByLabelText('Period') as HTMLSelectElement
   expect(period).toBeInTheDocument()

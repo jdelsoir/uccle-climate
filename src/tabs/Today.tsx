@@ -47,6 +47,16 @@ export default function Today() {
   const period = PERIODS[periodIdx]
   const shown = data.series.filter(s => s.year >= period.from && s.year <= period.to)
 
+  // All-time daily rank: is today among the 10 hottest / coldest days on record?
+  const startYear = summary?.annual?.[0]?.year ?? 1833
+  let allTime: { rank: number; kind: 'warmest' | 'coldest' } | null = null
+  if (live.data && summary?.extremes) {
+    const wRank = summary.extremes.warmest.filter(e => e.v > live.data!.tmax).length + 1
+    const cRank = summary.extremes.coldest.filter(e => e.v < live.data!.tmin).length + 1
+    if (wRank <= 10) allTime = { rank: wRank, kind: 'warmest' }
+    else if (cRank <= 10) allTime = { rank: cRank, kind: 'coldest' }
+  }
+
   return (
     <section className="fade-in space-y-4">
       <h2 className="text-2xl font-extrabold tracking-tight">This Day in History</h2>
@@ -63,18 +73,23 @@ export default function Today() {
             <span className="pb-1.5 text-sm text-muted">max {fmtTemp(live.data!.tmax)}</span>
           </div>
         )}
-        {r && (
-          <p className="mt-3 inline-block rounded-full bg-badge-bg px-3 py-1 text-xs font-semibold text-badge-fg">
-            {ordinal(r.rank)} warmest on this date in {r.total} years · {ordinal(Math.round(r.pct))} percentile
-          </p>
-        )}
         {(isHotRecord || isColdRecord) && (
-          <p className={`mt-3 flex items-center gap-2 text-sm font-semibold ${isHotRecord ? 'text-warm' : 'text-accent'}`}>
+          <p className={`mt-2 flex items-center gap-2 text-sm font-semibold ${isHotRecord ? 'text-warm' : 'text-accent'}`}>
             {isHotRecord ? <Flame size={16} aria-hidden /> : <Snowflake size={16} aria-hidden />}
             <span>
               {isHotRecord ? 'New record high for this date!' : 'New record low for this date!'}
               {recordCount > 0 && ` ${recordCount} ${isHotRecord ? 'heat' : 'cold'} records set in ${summary!.records.year}.`}
             </span>
+          </p>
+        )}
+        {r && (
+          <p className="mt-3 inline-block rounded-full bg-badge-bg px-3 py-1 text-xs font-semibold text-badge-fg">
+            {ordinal(r.rank)} warmest on this date in {r.total} years
+          </p>
+        )}
+        {allTime && (
+          <p className={`mt-2 text-sm font-semibold ${allTime.kind === 'warmest' ? 'text-warm' : 'text-accent'}`}>
+            {ordinal(allTime.rank)} {allTime.kind} day since {startYear}
           </p>
         )}
         {entry?.normal != null && live.data != null && (() => {

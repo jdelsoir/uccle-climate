@@ -1,4 +1,5 @@
-import { ScatterChart, Scatter, XAxis, YAxis, ResponsiveContainer, ComposedChart } from 'recharts'
+import { useState } from 'react'
+import { Scatter, XAxis, YAxis, ResponsiveContainer, ComposedChart } from 'recharts'
 import { useThisDay } from '../data/useThisDay'
 import { useTodayTemp } from '../data/useTodayTemp'
 import { todayMMDD, fmtTemp } from '../lib/format'
@@ -23,7 +24,7 @@ export default function Today() {
           : <>Today in Uccle: <strong>{fmtTemp(live.data!.temp)}</strong>
              {' '}(max {fmtTemp(live.data!.tmax)})</>}
       </p>
-      {r && <p className="badge">Today is the <strong>{ordinal(r.rank)} warmest</strong> on this date in {r.total} years ({Math.round(r.pct)}th percentile).</p>}
+      {r && <p className="badge">Today is the <strong>{ordinal(r.rank)} warmest</strong> on this date in {r.total} years ({ordinal(Math.round(r.pct))} percentile).</p>}
       <p>Record high: <strong>{fmtTemp(data.recordHigh.v)}</strong> ({data.recordHigh.year}) · Record low: <strong>{fmtTemp(data.recordLow.v)}</strong> ({data.recordLow.year})</p>
       <p>Then vs now: {fmtTemp(data.thenNow.early.mean)} ({data.thenNow.early.from}–{data.thenNow.early.to}) → {fmtTemp(data.thenNow.recent.mean)} ({data.thenNow.recent.from}–{data.thenNow.recent.to})</p>
       <DotColumn values={data.series.map(s => ({ year: s.year, value: s.tmax, highlight: false }))} />
@@ -39,16 +40,15 @@ export default function Today() {
 }
 
 function YearPicker({ series }: { series: { year: number; tmax: number; tmin: number }[] }) {
-  const years = series.map(s => s.year)
+  const [sel, setSel] = useState<number>(series[0]?.year)
+  const s = series.find(x => x.year === sel)
   return (
-    <details><summary>Time machine — pick a year</summary>
-      <select onChange={e => {
-        const s = series.find(x => x.year === Number(e.target.value))
-        const el = document.getElementById('tm-out'); if (el && s) el.textContent = `${s.year}: max ${s.tmax} °C, min ${s.tmin} °C`
-      }}>
-        {years.map(y => <option key={y} value={y}>{y}</option>)}
+    <details>
+      <summary>Time machine — pick a year</summary>
+      <select value={sel} onChange={e => setSel(Number(e.target.value))}>
+        {series.map(x => <option key={x.year} value={x.year}>{x.year}</option>)}
       </select>
-      <p id="tm-out" />
+      {s && <p>{s.year}: max {s.tmax} °C, min {s.tmin} °C</p>}
     </details>
   )
 }

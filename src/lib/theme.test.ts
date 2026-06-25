@@ -18,3 +18,12 @@ test('getStoredTheme defaults to system', () => {
 test('resolve("system") returns light when matchMedia is false', () => {
   expect(resolve('system')).toBe('light')
 })
+test('resolve("system") returns dark when matchMedia reports dark', () => {
+  const orig = window.matchMedia
+  window.matchMedia = (q: string) => ({ matches: true, media: q, onchange: null,
+    addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {},
+    dispatchEvent() { return false } }) as unknown as MediaQueryList
+  try {
+    expect(resolve('system')).toBe('dark')
+  } finally { window.matchMedia = orig }
+})

@@ -4,8 +4,15 @@ import { applyTheme, getStoredTheme, resolve, type ThemePref } from '../lib/them
 
 export default function ThemeToggle() {
   const [pref, setPref] = useState<ThemePref>(() => getStoredTheme())
-  useEffect(() => { applyTheme(pref) }, [pref])
   const isDark = resolve(pref) === 'dark'
+  useEffect(() => {
+    applyTheme(pref)
+    if (pref !== 'system' || typeof window.matchMedia !== 'function') return
+    const mql = window.matchMedia('(prefers-color-scheme: dark)')
+    const handler = () => applyTheme('system')
+    mql.addEventListener('change', handler)
+    return () => mql.removeEventListener('change', handler)
+  }, [pref])
   return (
     <button
       type="button"

@@ -1,4 +1,5 @@
 export type ThemePref = 'light' | 'dark' | 'system'
+// NOTE: keep in sync with the no-flash inline script in index.html (same 'uccle.theme' key).
 const KEY = 'uccle.theme'
 
 export function getStoredTheme(): ThemePref {

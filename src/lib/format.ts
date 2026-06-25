@@ -19,3 +19,9 @@ const MONTHS_FULL = ['January', 'February', 'March', 'April', 'May', 'June',
 export const fmtMonth = (mm: string): string => MONTHS_FULL[Number(mm) - 1]
 export const fmtDayLabel = (mmdd: string): string =>
   `${Number(mmdd.slice(2))} ${fmtMonth(mmdd.slice(0, 2))}`
+
+// Local-time ISO date "YYYY-MM-DD" (matches todayMMDD's local-time basis).
+export const todayISO = (): string => {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}

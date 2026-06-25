@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { mmddOf, todayMMDD, fmtTemp, fmtDate, fmtMonth, fmtDayLabel } from './format'
+import { mmddOf, todayMMDD, fmtTemp, fmtDate, fmtMonth, fmtDayLabel, todayISO } from './format'
 
 describe('mmddOf', () => {
   it('zero-pads month and day', () => {
@@ -41,5 +41,14 @@ describe('fmtMonth/fmtDayLabel', () => {
     expect(fmtMonth('01')).toBe('January')
     expect(fmtDayLabel('0626')).toBe('26 June')
     expect(fmtDayLabel('0103')).toBe('3 January')
+  })
+})
+
+describe('todayISO', () => {
+  it('returns local YYYY-MM-DD matching the local date', () => {
+    const d = new Date()
+    const exp = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    expect(todayISO()).toBe(exp)
+    expect(todayISO()).toMatch(/^\d{4}-\d{2}-\d{2}$/)
   })
 })

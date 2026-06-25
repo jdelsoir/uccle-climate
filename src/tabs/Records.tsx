@@ -3,7 +3,7 @@ import { Flame, Snowflake } from 'lucide-react'
 import { useSummary } from '../data/useSummary'
 import { useTodayTemp } from '../data/useTodayTemp'
 import { Loading, ErrorState } from '../components/States'
-import { fmtTemp, fmtDate } from '../lib/format'
+import { fmtTemp, fmtDate, todayISO } from '../lib/format'
 import { mergeLiveExtreme } from '../lib/records'
 
 type Mode = 'warm' | 'cold'
@@ -16,8 +16,8 @@ export default function Records() {
   if (error || !summary) return <ErrorState label="Could not load data." />
 
   const warm = mode === 'warm'
-  const todayISO = new Date().toISOString().slice(0, 10)
-  const liveDatum = live.data ? { date: todayISO, v: warm ? live.data.tmax : live.data.tmin } : null
+  const today = todayISO()
+  const liveDatum = live.data ? { date: today, v: warm ? live.data.tmax : live.data.tmin } : null
   const list = mergeLiveExtreme(warm ? summary.extremes.warmest : summary.extremes.coldest, liveDatum, warm ? 'warm' : 'cold').slice(0, 10)
   const accent = warm ? 'text-warm' : 'text-accent'
 
@@ -52,11 +52,11 @@ export default function Records() {
         {list.map((rec, i) => (
           <li
             key={rec.date}
-            className={`flex items-center justify-between rounded-xl border px-4 py-3 ${rec.date === todayISO ? 'border-warm bg-warm/5' : 'border-border bg-surface'}`}
+            className={`flex items-center justify-between rounded-xl border px-4 py-3 ${rec.date === today ? 'border-warm bg-warm/5' : 'border-border bg-surface'}`}
           >
             <div className="flex items-center gap-3">
               <span className="w-5 text-right text-sm font-bold text-muted">{i + 1}</span>
-              <span className="text-sm">{fmtDate(rec.date)}{rec.date === todayISO ? ' · today' : ''}</span>
+              <span className="text-sm">{fmtDate(rec.date)}{rec.date === today ? ' · today' : ''}</span>
             </div>
             <span className={`text-lg font-bold ${accent}`}>{fmtTemp(rec.v)}</span>
           </li>

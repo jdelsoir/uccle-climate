@@ -102,3 +102,27 @@ def test_rankings():
     r = rankings(am)
     assert r["warmest"][0] == {"year": 2001, "mean": 12.0}
     assert r["coldest"][0] == {"year": 2000, "mean": 10.0}
+
+
+def test_growing_season():
+    # Build a year where:
+    # - first 6-day warm run (Tmean>5) starts Jan 1 (days 1-6)
+    # - first 6-day cold run (Tmean<5) after doy>=182 starts on day 182 (Jul 1)
+    # GSL = (day 182) - (day 1) = 181 days
+    import datetime as dt
+    recs = []
+    year = 2000
+    start = dt.date(year, 1, 1)
+    for i in range(365):
+        d = start + dt.timedelta(days=i)
+        doy = d.timetuple().tm_yday
+        # Warm before day 182 (tmean=10), cold from day 182 (tmean=2)
+        tmean = 10.0 if doy < 182 else 2.0
+        # Construct record with tmax/tmin consistent with tmean
+        recs.append({"date": d, "tmax": tmean + 2, "tmin": tmean - 2, "tmean": tmean})
+    result = growing_season(recs)
+    assert len(result) == 1
+    assert result[0]["year"] == year
+    # first warm run ends at day 6 (start = day 1); first cold run after doy>=182 ends at day 187 (start = day 182)
+    # GSL = 182 - 1 = 181 days (delta between start dates as dt.date objects)
+    assert result[0]["n"] == 181

@@ -1,10 +1,8 @@
-// Diverging blue→white→red, clamped to ±span °C anomaly.
+import { RAMP } from './ramp'
+
+// Map a temperature anomaly (°C) to the diverging ramp, clamped to ±span.
 export function anomalyColor(v: number, span = 2.6): string {
-  const t = Math.max(-1, Math.min(1, v / span))
-  if (t >= 0) {
-    const g = Math.round(255 * (1 - t)), b = Math.round(255 * (1 - t))
-    return `rgb(220,${g},${b})`
-  }
-  const r = Math.round(255 * (1 + t)), g = Math.round(255 * (1 + t))
-  return `rgb(${r},${g},230)`
+  const t = Math.max(-1, Math.min(1, v / span))       // -1 (cool) .. 1 (warm)
+  const idx = Math.round(((t + 1) / 2) * (RAMP.length - 1))
+  return RAMP[idx]
 }

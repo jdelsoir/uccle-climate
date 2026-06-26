@@ -25,10 +25,11 @@ export default function Records() {
     <section className="fade-in space-y-4">
       <h2 className="text-2xl font-extrabold tracking-tight">Records</h2>
 
-      <div className="inline-flex rounded-lg border border-border bg-surface p-1 text-sm" role="group" aria-label="Record type">
+      <div className="inline-flex rounded-lg border border-border bg-surface p-1 text-sm" role="radiogroup" aria-label="Record type">
         <button
           type="button"
-          aria-pressed={warm}
+          role="radio"
+          aria-checked={warm}
           onClick={() => setMode('warm')}
           className={`flex items-center gap-1 rounded-md px-3 py-1.5 ${warm ? 'bg-warm/10 font-semibold text-warm' : 'text-muted'}`}
         >
@@ -36,7 +37,8 @@ export default function Records() {
         </button>
         <button
           type="button"
-          aria-pressed={!warm}
+          role="radio"
+          aria-checked={!warm}
           onClick={() => setMode('cold')}
           className={`flex items-center gap-1 rounded-md px-3 py-1.5 ${!warm ? 'bg-accent/10 font-semibold text-accent' : 'text-muted'}`}
         >

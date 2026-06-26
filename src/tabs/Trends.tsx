@@ -47,15 +47,17 @@ export default function Trends() {
             <option value="1961-1990">1961–1990</option>
           </select>
         </div>
-        <ResponsiveContainer width="100%" height={260}>
-          <BarChart data={anom} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
-            <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
-            <XAxis dataKey="year" tick={{ fill: 'var(--muted)', fontSize: 11 }} stroke="var(--border)" />
-            <YAxis tick={{ fill: 'var(--muted)', fontSize: 11 }} stroke="var(--border)" />
-            <Tooltip contentStyle={tooltipStyle} />
-            <Bar dataKey="v">{anom.map(a => <Cell key={a.year} fill={anomalyColor(a.v)} />)}</Bar>
-          </BarChart>
-        </ResponsiveContainer>
+        <div role="img" aria-label="Annual temperature anomaly by year (red warmer, blue cooler)">
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={anom} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
+              <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+              <XAxis dataKey="year" tick={{ fill: 'var(--muted)', fontSize: 11 }} stroke="var(--border)" />
+              <YAxis tick={{ fill: 'var(--muted)', fontSize: 11 }} stroke="var(--border)" />
+              <Tooltip contentStyle={tooltipStyle} />
+              <Bar dataKey="v">{anom.map(a => <Cell key={a.year} fill={anomalyColor(a.v)} />)}</Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </section>
   )

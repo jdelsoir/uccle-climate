@@ -69,7 +69,7 @@ export default function DayView({ mmdd, isToday }: { mmdd: string; isToday: bool
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="rounded-xl border border-border bg-surface p-4">
           <p className="text-[11px] uppercase tracking-[0.09em] text-muted">Record high</p>
           <p className="mt-1 text-lg font-bold text-warm">{fmtTemp(data.recordHigh.v)}</p>

@@ -29,17 +29,19 @@ export default function PeriodScatter({ data, series, title }: {
         </select>
       </div>
       <p className="mb-1 text-xs text-muted">
-        {series.map(s => <span key={s.key} className="mr-3"><span style={{ color: s.color }}>●</span> {s.name}</span>)} (°C)
+        {series.map(s => <span key={s.key} className="mr-3"><span style={{ color: s.color }} aria-hidden>●</span> {s.name}</span>)} (°C)
       </p>
-      <ResponsiveContainer width="100%" height={240}>
-        <ComposedChart data={shown} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
-          <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
-          <XAxis dataKey="year" tick={{ fill: 'var(--muted)', fontSize: 11 }} stroke="var(--border)" />
-          <YAxis tick={{ fill: 'var(--muted)', fontSize: 11 }} stroke="var(--border)" />
-          <Tooltip contentStyle={tooltipStyle} />
-          {series.map(s => <Scatter key={s.key} name={s.name} dataKey={s.key} fill={s.color} />)}
-        </ComposedChart>
-      </ResponsiveContainer>
+      <div role="img" aria-label={`${title} — scatter chart by year`}>
+        <ResponsiveContainer width="100%" height={240}>
+          <ComposedChart data={shown} margin={{ top: 8, right: 8, bottom: 0, left: -8 }}>
+            <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+            <XAxis dataKey="year" tick={{ fill: 'var(--muted)', fontSize: 11 }} stroke="var(--border)" />
+            <YAxis tick={{ fill: 'var(--muted)', fontSize: 11 }} stroke="var(--border)" />
+            <Tooltip contentStyle={tooltipStyle} />
+            {series.map(s => <Scatter key={s.key} name={s.name} dataKey={s.key} fill={s.color} />)}
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   )
 }

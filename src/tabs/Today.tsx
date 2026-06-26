@@ -38,18 +38,18 @@ export default function Today() {
   const stepYear = (d: number) => setYear(Math.min(maxYear, Math.max(minYear, selYear + d)))
 
   const stepper = mode === 'day'
-    ? <Stepper label={fmtDayLabel(mmdd)} onPrev={() => stepDay(-1)} onNext={() => stepDay(1)} />
+    ? <Stepper label={fmtDayLabel(mmdd)} onPrev={() => stepDay(-1)} onNext={() => stepDay(1)} unit="day" />
     : mode === 'month'
-      ? <Stepper label={fmtMonth(mm)} onPrev={() => stepMonth(-1)} onNext={() => stepMonth(1)} />
-      : <Stepper label={String(selYear)} onPrev={() => stepYear(-1)} onNext={() => stepYear(1)} prevDisabled={selYear <= minYear} nextDisabled={selYear >= maxYear} />
+      ? <Stepper label={fmtMonth(mm)} onPrev={() => stepMonth(-1)} onNext={() => stepMonth(1)} unit="month" />
+      : <Stepper label={String(selYear)} onPrev={() => stepYear(-1)} onNext={() => stepYear(1)} prevDisabled={selYear <= minYear} nextDisabled={selYear >= maxYear} unit="year" />
 
   return (
     <section className="fade-in space-y-4">
       <h2 className="text-2xl font-extrabold tracking-tight">{HEADINGS[mode]}</h2>
 
-      <div className="inline-flex rounded-lg border border-border bg-surface p-1 text-sm" role="group" aria-label="Granularity">
+      <div className="inline-flex rounded-lg border border-border bg-surface p-1 text-sm" role="radiogroup" aria-label="Granularity">
         {MODES.map(m => (
-          <button key={m} type="button" aria-pressed={mode === m} onClick={() => setMode(m)}
+          <button key={m} type="button" role="radio" aria-checked={mode === m} onClick={() => setMode(m)}
             className={`rounded-md px-3 py-1.5 capitalize ${mode === m ? 'bg-accent-soft font-semibold text-accent' : 'text-muted'}`}>{m}</button>
         ))}
       </div>

@@ -24,6 +24,6 @@ test('defaults to Day mode with heading and switches to Month', async () => {
   vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
   render(<Today />)
   expect(screen.getByRole('heading', { name: /this day in history/i })).toBeInTheDocument()
-  fireEvent.click(screen.getByRole('button', { name: /month/i }))
+  fireEvent.click(screen.getByRole('radio', { name: /month/i }))
   await waitFor(() => expect(screen.getByRole('heading', { name: /this month in history/i })).toBeInTheDocument())
 })

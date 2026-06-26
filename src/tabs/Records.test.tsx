@@ -38,7 +38,7 @@ test('defaults to Warmest and lists records with dates', async () => {
   render(<Records />)
   await waitFor(() => expect(screen.getByText('36.6 °C')).toBeInTheDocument())
   expect(screen.getByText('25 Jun 1947')).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /warmest/i })).toHaveAttribute('aria-pressed', 'true')
+  expect(screen.getByRole('radio', { name: /warmest/i })).toHaveAttribute('aria-checked', 'true')
   // cold record not shown by default
   expect(screen.queryByText('-19.5 °C')).not.toBeInTheDocument()
 })
@@ -55,7 +55,7 @@ test('toggles to Coldest', async () => {
   )
   render(<Records />)
   await waitFor(() => screen.getByText('36.6 °C'))
-  fireEvent.click(screen.getByRole('button', { name: /coldest/i }))
+  fireEvent.click(screen.getByRole('radio', { name: /coldest/i }))
   expect(screen.getByText('-19.5 °C')).toBeInTheDocument()
   expect(screen.getByText('26 Jan 1942')).toBeInTheDocument()
   expect(screen.queryByText('36.6 °C')).not.toBeInTheDocument()

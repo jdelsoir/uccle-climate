@@ -32,7 +32,7 @@ export default function MonthView({ mm, currentYear }: { mm: string; currentYear
         ) : <p className="mt-2 text-sm text-muted">No data for {name} {currentYear} yet.</p>}
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="rounded-xl border border-border bg-surface p-4">
           <p className="text-[11px] uppercase tracking-[0.09em] text-muted">Warmest {name} on record</p>
           <p className="mt-1 text-lg font-bold text-warm">{fmtTemp(data.recordWarm?.v)}</p>

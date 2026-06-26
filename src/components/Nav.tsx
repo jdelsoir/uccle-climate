@@ -13,6 +13,7 @@ const tabs = [
 export default function Nav() {
   return (
     <nav
+      aria-label="Main"
       className="fixed inset-x-0 bottom-0 z-20 flex justify-around border-t border-border bg-surface/95 backdrop-blur
                  pb-[env(safe-area-inset-bottom)]
                  lg:static lg:mx-auto lg:max-w-[680px] lg:justify-center lg:gap-1 lg:border-t-0 lg:bg-transparent lg:pb-0 lg:pt-2"

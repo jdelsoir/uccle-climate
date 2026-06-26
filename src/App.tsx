@@ -12,9 +12,10 @@ export default function App() {
   return (
     <HashRouter>
       <div className="min-h-dvh bg-bg text-fg">
+        <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-surface focus:px-3 focus:py-2 focus:text-fg">Skip to content</a>
         <Header />
         <Nav />
-        <main className="mx-auto max-w-[680px] px-4 pb-28 pt-4 lg:pb-12">
+        <main id="main" className="mx-auto max-w-[680px] px-4 pb-28 pt-4 lg:pb-12">
           <Routes>
             <Route path="/today" element={<Today />} />
             <Route path="/trends" element={<Trends />} />

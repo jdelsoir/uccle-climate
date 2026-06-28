@@ -10,11 +10,11 @@ Public **climate-awareness PWA** built on the **Uccle / Ukkel (Brussels) tempera
 - **Frontend:** React 18 + Vite 6 + TypeScript, **Tailwind v4** (`@tailwindcss/vite`, tokens in `src/index.css`), **HashRouter** (Pages has no SPA fallback), Recharts, `lucide-react`, `vite-plugin-pwa` (Workbox).
 - **Pipeline:** Python 3.11 **stdlib only** in `scripts/uccle/` (`parser.py` → `.dly`, `derive.py`, `build_data.py`). Pillow only for icon generation (`scripts/gen_icons.py`).
 - **Tests:** Vitest (frontend) + pytest (pipeline). TDD throughout; test output kept pristine.
-- **CI/Deploy:** GitHub Actions → Pages (`.github/workflows/deploy.yml`) regenerates data + builds + deploys on push to `main`; weekly `refresh.yml` cron. **Vite `base=/uccle-climate/`.**
+- **CI/Deploy:** GitHub Actions → Pages (`.github/workflows/deploy.yml`) regenerates data + builds + deploys on push to `main`; **daily** `refresh.yml` cron (05:00 UTC) keeps recent days fresh. **Vite `base=/uccle-climate/`.**
 
 ## Data
-- **Sources:** NOAA **GHCN-Daily** station `BE000006447` (deep history) + **Open-Meteo ERA5 archive** (gap-fill 1940+) + **live Open-Meteo** (today). `public/data/` is **CI-generated, git-ignored**.
-- **Emitted JSON:** `summary.json` (annual means/anomaly/decadal/warmingRate/counters/rankings/extremes/records), `daynorm.json` (1991-2020 & 1961-1990 day-of-year mean normals + p10/p90), `thisday/MMDD.json` (per-year `series` {year,tmax,tmin} + all-time recordHigh/recordLow + thenNow), `month/MM.json` (per-year monthly means + records + normal + thenNow).
+- **Sources (precedence GHCN > ERA5 > forecast):** NOAA **GHCN-Daily** station `BE000006447` (deep history, authoritative) + **Open-Meteo ERA5 archive** (gap-fill 1940+, `end`=yesterday) + **Open-Meteo forecast `past_days`** (recent-days fill before ERA5 finalizes) + **live Open-Meteo** (today, app-side). `build_data.merge_fills` applies precedence, drops dates ≥ today (app owns today), and flags filled days within the 5-day ERA5 lag `provisional`. `public/data/` is **CI-generated, git-ignored**.
+- **Emitted JSON:** `summary.json` (annual means/anomaly/decadal/warmingRate/counters/rankings/extremes/records), `daynorm.json` (1991-2020 & 1961-1990 day-of-year mean normals + p10/p90), `thisday/MMDD.json` (per-year `series` {year,tmax,tmin,provisional?} + all-time recordHigh/recordLow + thenNow), `month/MM.json` (per-year monthly means + records + normal + thenNow).
 - **App tabs:** Today (Day/Month/Year), Records, Climate, Me, About.
 
 ## Key decisions
@@ -57,8 +57,11 @@ Superpowers flow: **brainstorm → design spec → implementation plan → subag
 2. **Visual redesign** — "Scientific & Clean" design system, light+dark, Lucide icons, responsive, designed app icon.
 3. **Day/Month/Year + records consistency** — Today tab granularity toggle; monthly pipeline (`month/MM.json`); shared `records.ts` fixing the Today↔Records rank disagreement. Verified by a 200+-state workflow (0 data mismatches; a11y/layout fixes applied).
 4. **Today specific-date navigator** — Day view reworked into a date navigator (date display, ◀▶ + calendar picker, two colored temps, clickable records + record-broken/previous, viewed-year-relative Then-vs-Now). Independently verified from the live site (picker-a11y fix applied).
+5. **Incremental daily-fresh pipeline** — fixed stale recent days (only weekly/on-push rebuilds left yesterday empty). Added Open-Meteo forecast `past_days` recent-fill via `merge_fills` (GHCN>ERA5>forecast precedence, cutoff at yesterday, `provisional` flag on last-5-days fills), `per_date` propagation, subtle Day-view provisional marker, About caveat; flipped `refresh.yml` weekly→daily. 5 subagent-driven tasks + final review; live-verified (0627 provisional, 0628 dropped, marker + caveat in bundle).
 
 ## Known fast-follows (non-blocking)
 - `useSummary`/`useDayNorm`/`useTodayTemp` lack in-app fetch dedup (SW HTTP-caches; a naive module cache breaks per-test mocks).
 - GitHub Actions Node 20→24 deprecation — bump action versions.
 - Recharts ~600 kB bundle — code-split charts to roughly halve initial JS.
+- **Records/extremes are provisional-blind:** a hot recent day filled from forecast can transiently top a daily record/`summary.extremes` (and fire the Day-view record-broken banner) unflagged until ERA5 finalizes; next daily rebuild self-corrects. About notes it. Could exclude/flag provisional days in records.
+- **Daily cron 60-day auto-disable:** GitHub disables scheduled workflows after 60 days with no repo commits; data deploys don't commit, so a long dev-quiet stretch silently stops `refresh.yml`. Re-enable via `workflow_dispatch`, or add a heartbeat-commit keepalive.

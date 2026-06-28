@@ -20,7 +20,7 @@ export interface ThisDay {
   mmdd: string
   recordHigh: { v: number; year: number }
   recordLow: { v: number; year: number }
-  series: { year: number; tmax: number; tmin: number }[]
+  series: { year: number; tmax: number; tmin: number; provisional?: boolean }[]
   thenNow: { early: { from: number; to: number; mean: number | null }; recent: { from: number; to: number; mean: number | null } }
 }
 export interface MonthData {

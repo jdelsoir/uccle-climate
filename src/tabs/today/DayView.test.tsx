@@ -75,3 +75,32 @@ test('on real today, live fetch error shows "Live temperature unavailable."', as
   render(<DayView />)
   await waitFor(() => expect(screen.getByText(/Live temperature unavailable/i)).toBeInTheDocument())
 })
+
+// thisday whose 2024 entry is provisional (recent-fill flag)
+const thisdayProv = { mmdd: '0628', recordHigh: { v: 34.8, year: 1955 }, recordLow: { v: 4.1, year: 1923 },
+  series: [
+    { year: 2020, tmax: 31, tmin: 17 },
+    { year: 2024, tmax: 29, tmin: 15, provisional: true },
+  ],
+  thenNow: { early: { from: 1833, to: 1900, mean: 18 }, recent: { from: 1996, to: 2025, mean: 21 } } }
+
+test('provisional past day shows a subtle marker', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) =>
+    Promise.resolve({ ok: true, json: async () => (u.includes('open-meteo') ? live : u.includes('daynorm') ? daynorm : thisdayProv) })))
+  const { container } = render(<DayView />)
+  await waitFor(() => expect(container.querySelector('input[type="date"]')).toBeTruthy())
+  const input = container.querySelector('input[type="date"]') as HTMLInputElement
+  fireEvent.change(input, { target: { value: '2024-06-28' } })  // provisional entry, not today
+  await waitFor(() => expect(screen.getByText(/Provisional/i)).toBeInTheDocument())
+})
+
+test('non-provisional day shows no marker', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) =>
+    Promise.resolve({ ok: true, json: async () => (u.includes('open-meteo') ? live : u.includes('daynorm') ? daynorm : thisdayProv) })))
+  const { container } = render(<DayView />)
+  await waitFor(() => expect(container.querySelector('input[type="date"]')).toBeTruthy())
+  const input = container.querySelector('input[type="date"]') as HTMLInputElement
+  fireEvent.change(input, { target: { value: '2020-06-28' } })   // 2020 entry has no provisional
+  await waitFor(() => expect(screen.getByText('31.0 °C')).toBeInTheDocument())
+  expect(screen.queryByText(/Provisional/i)).not.toBeInTheDocument()
+})

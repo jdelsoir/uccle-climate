@@ -14,21 +14,39 @@ ARCHIVE_URL = (
 )
 ARCHIVE_START = "1940-01-01"  # ERA5 begins 1940; GHCN-only keeps deep history pre-1940
 
+# Open-Meteo forecast past_days — recent-days fill (covers the gap before ERA5 finalizes).
+RECENT_URL = (
+    "https://api.open-meteo.com/v1/forecast?latitude=50.8&longitude=4.36"
+    "&daily=temperature_2m_max,temperature_2m_min&timezone=Europe/Brussels"
+    "&past_days={days}&forecast_days=1"
+)
 
-def merge_archive(recs, archive):
-    """GHCN records are authoritative; Open-Meteo ERA5 fills dates GHCN lacks.
 
-    recs: list of {date, tmax, tmin, tmean}. archive: {date: {tmax, tmin}}.
+def merge_fills(recs, archive=None, recent=None, today=None, lag=5):
+    """GHCN records are authoritative; fill remaining dates from ERA5 archive,
+    then from the forecast `recent` dict. Precedence: GHCN > archive > recent.
+
+    With `today` set: drop any fill date >= today (the live app owns today), and
+    tag a filled day `provisional=True` when date >= today - lag (ERA5 lag window).
+    GHCN days are never provisional.
     """
     have = {r["date"] for r in recs}
     merged = list(recs)
-    for d, v in archive.items():
-        if d in have:
-            continue
-        tmax, tmin = v.get("tmax"), v.get("tmin")
-        if tmax is None or tmin is None:
-            continue
-        merged.append({"date": d, "tmax": tmax, "tmin": tmin, "tmean": (tmax + tmin) / 2})
+    fills = {}
+    for src in (archive or {}, recent or {}):       # archive first → wins ties
+        for d, v in src.items():
+            if d in have or d in fills:
+                continue
+            if today is not None and d >= today:    # cutoff: only up to yesterday
+                continue
+            tmax, tmin = v.get("tmax"), v.get("tmin")
+            if tmax is None or tmin is None:
+                continue
+            entry = {"date": d, "tmax": tmax, "tmin": tmin, "tmean": (tmax + tmin) / 2}
+            if today is not None and d >= today - dt.timedelta(days=lag):
+                entry["provisional"] = True
+            fills[d] = entry
+    merged.extend(fills.values())
     merged.sort(key=lambda r: r["date"])
     return merged
 
@@ -48,12 +66,27 @@ def fetch_archive(start, end):
     return out
 
 
-def build(text=None, records=None, archive=None, out_dir="public/data"):
+def fetch_recent(days=7):
+    """Fetch Open-Meteo forecast recent days into {date: {tmax, tmin}}."""
+    url = RECENT_URL.format(days=days)
+    with urllib.request.urlopen(url, timeout=60) as resp:
+        j = json.loads(resp.read())
+    daily = j["daily"]
+    out = {}
+    for i, dstr in enumerate(daily["time"]):
+        out[dt.date.fromisoformat(dstr)] = {
+            "tmax": daily["temperature_2m_max"][i],
+            "tmin": daily["temperature_2m_min"][i],
+        }
+    return out
+
+
+def build(text=None, records=None, archive=None, recent=None, today=None, out_dir="public/data"):
     recs = records if records is not None else daily_records(parse_dly(text))
     if not recs:
         raise SystemExit("No records parsed — aborting (format drift?)")
-    if archive:
-        recs = merge_archive(recs, archive)
+    if archive or recent:
+        recs = merge_fills(recs, archive, recent, today)
     annual = derive.annual_means(recs)
     per_date = derive.per_date(recs)
     latest_year = max(a["year"] for a in annual)
@@ -122,14 +155,21 @@ def _write(path, obj):
 def main():
     with urllib.request.urlopen(DLY_URL, timeout=120) as resp:
         text = resp.read().decode("utf-8", "replace")
-    end = dt.date.today().isoformat()
+    today = dt.date.today()
+    end = (today - dt.timedelta(days=1)).isoformat()   # cutoff: live app owns today
     try:
         archive = fetch_archive(ARCHIVE_START, end)
         print(f"Fetched {len(archive)} archive days {ARCHIVE_START}..{end}")
-    except Exception as e:  # archive is a best-effort enhancement; never fail the build on it
+    except Exception as e:  # best-effort enhancement; never fail the build on it
         archive = None
-        print(f"WARNING: archive fetch failed ({e}); building from GHCN only")
-    build(text=text, archive=archive)
+        print(f"WARNING: archive fetch failed ({e}); building without ERA5 fill")
+    try:
+        recent = fetch_recent()
+        print(f"Fetched {len(recent)} recent forecast days")
+    except Exception as e:  # best-effort; degrade to archive/GHCN only
+        recent = None
+        print(f"WARNING: recent fetch failed ({e}); building without forecast fill")
+    build(text=text, archive=archive, recent=recent, today=today)
     print("Wrote public/data/")
 
 

@@ -161,3 +161,15 @@ def test_month_data_records_normal_thennow():
     assert june["recordCold"] == {"year": 1990, "v": 15.0}
     assert june["normal"] == round((15.0 + 18.0 + 20.0) / 3, 2)  # complete months in 1990-2020
     assert june["thenNow"]["early"]["mean"] == 15.0 and june["thenNow"]["recent"]["mean"] == 19.0
+
+
+def test_per_date_propagates_provisional():
+    recs = [
+        {"date": dt.date(2024, 6, 28), "tmax": 28.0, "tmin": 16.0, "tmean": 22.0},
+        {"date": dt.date(2026, 6, 28), "tmax": 30.0, "tmin": 18.0, "tmean": 24.0,
+         "provisional": True},
+    ]
+    series = per_date(recs)["0628"]["series"]
+    by_year = {e["year"]: e for e in series}
+    assert by_year[2026]["provisional"] is True       # provisional record → flagged
+    assert "provisional" not in by_year[2024]          # normal record → key omitted

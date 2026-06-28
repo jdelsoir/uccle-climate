@@ -28,6 +28,7 @@ export default function DayView() {
 
   const normal = dayNorm.data?.['1991-2020']?.find(n => n.mmdd === mmdd)?.normal ?? null
   const entry = data.series.find(s => s.year === year)
+  const provisional = !!entry?.provisional && !isReal
 
   let maxV: number | null = null, secondV: number | null = null, secondLabel = 'min'
   if (isReal && live.data) { maxV = live.data.tmax; secondV = live.data.temp; secondLabel = 'current' }
@@ -79,6 +80,12 @@ export default function DayView() {
         {normal != null && (
           <p className="mt-2 text-xs text-muted">
             Average {fmtTemp(normal)} <span className="text-muted/70">(1991–2020)</span>
+          </p>
+        )}
+
+        {provisional && (
+          <p className="mt-1 text-[11px] text-muted">
+            <span aria-hidden>· </span>Provisional — may be revised
           </p>
         )}
 

@@ -36,6 +36,7 @@ Public **climate-awareness PWA** built on the **Uccle / Ukkel (Brussels) tempera
 - **Tests:** in Vitest, mock Recharts `ResponsiveContainer` to avoid jsdom width(0) noise; test files that stub `fetch` add `afterEach(() => vi.unstubAllGlobals())`; avoid date-coupled fixtures (derive mmdd from `todayMMDD()`).
 - **a11y:** single-select toggles use `role="radiogroup"`/`role="radio"`+`aria-checked`; every control has an accessible name; decorative icons `aria-hidden`; skip-to-content link in `App.tsx`.
 - **Commits:** end messages with `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`.
+- **Autonomy / publishing:** early-dev project on **public data only** (no secrets, no PII) — safe to auto-commit and publish without asking. Standing workflow for every change: run tests → commit → `git push origin main` (CI deploys to Pages) → **validate on the live site** (https://jdelsoir.github.io/uccle-climate/) that the change shipped before calling it done.
 
 ## Build / verify / deploy
 ```bash

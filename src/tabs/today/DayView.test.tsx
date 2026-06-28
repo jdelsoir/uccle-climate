@@ -29,6 +29,9 @@ test('today shows max + current, both colored, date line', async () => {
   await waitFor(() => expect(screen.getByText('29.0 °C')).toBeInTheDocument()) // max
   expect(screen.getByText('27.0 °C')).toBeInTheDocument()                      // current
   expect(screen.getByText('current')).toBeInTheDocument()
+  expect(screen.getByText(/Average 24\.0 °C/)).toBeInTheDocument()             // 1991-2020 day normal
+  // max 29 is 4th-warmest tmax of 6 years; earliest series year is 1923
+  expect(screen.getByText(/4th warmest June 28 since 1923/)).toBeInTheDocument()
 })
 
 test('navigating to the record year shows the record-broken banner + previous record, and records are clickable', async () => {

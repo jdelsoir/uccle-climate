@@ -3,7 +3,7 @@ import { Flame, Snowflake } from 'lucide-react'
 import { useThisDay } from '../../data/useThisDay'
 import { useTodayTemp } from '../../data/useTodayTemp'
 import { useDayNorm } from '../../data/useDayNorm'
-import { fmtTemp, mmddOf, isoOf, todayISO, ordinal } from '../../lib/format'
+import { fmtTemp, mmddOf, isoOf, todayISO, ordinal, fmtMonth } from '../../lib/format'
 import { rankOf } from '../../lib/stats'
 import { decadeMean, previousRecordHigh, previousRecordLow, tempColor } from '../../lib/dayStats'
 import { Loading, ErrorState } from '../../components/States'
@@ -39,6 +39,8 @@ export default function DayView() {
   const prevLow = brokeLow ? previousRecordLow(data.series, year) : null
 
   const r = maxV != null ? rankOf(maxV, data.series.map(s => s.tmax)) : null
+  const dayLabel = `${fmtMonth(mmdd.slice(0, 2))} ${Number(mmdd.slice(2))}`
+  const firstYear = data.series.length ? Math.min(...data.series.map(s => s.year)) : null
 
   const recentFrom = year - 11, recentTo = year - 1
   const thenFrom = year - 111, thenTo = year - 101
@@ -74,6 +76,12 @@ export default function DayView() {
           <p className="mt-4 text-sm text-muted">No data for this date.</p>
         )}
 
+        {normal != null && (
+          <p className="mt-2 text-xs text-muted">
+            Average {fmtTemp(normal)} <span className="text-muted/70">(1991–2020)</span>
+          </p>
+        )}
+
         {(brokeHigh || brokeLow) && (
           <p className={`mt-3 flex items-center gap-2 text-sm font-semibold ${brokeHigh ? 'text-warm' : 'text-accent'}`}>
             {brokeHigh ? <Flame size={16} aria-hidden /> : <Snowflake size={16} aria-hidden />}
@@ -87,7 +95,7 @@ export default function DayView() {
         )}
 
         {r && <p className="mt-3 inline-block rounded-full bg-badge-bg px-3 py-1 text-xs font-semibold text-badge-fg">
-          {ordinal(r.rank)} warmest on this date in {r.total} years</p>}
+          {ordinal(r.rank)} warmest {dayLabel}{firstYear != null && ` since ${firstYear}`}</p>}
       </div>
 
       <div className="grid grid-cols-2 gap-3">

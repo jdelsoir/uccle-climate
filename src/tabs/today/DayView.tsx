@@ -1,94 +1,110 @@
+import { useState } from 'react'
 import { Flame, Snowflake } from 'lucide-react'
 import { useThisDay } from '../../data/useThisDay'
 import { useTodayTemp } from '../../data/useTodayTemp'
 import { useDayNorm } from '../../data/useDayNorm'
-import { useSummary } from '../../data/useSummary'
-import { fmtTemp, todayISO, ordinal } from '../../lib/format'
-import { rankOf, meanAnomaly } from '../../lib/stats'
-import { allTimeRank } from '../../lib/records'
+import { fmtTemp, mmddOf, isoOf, todayISO, ordinal } from '../../lib/format'
+import { rankOf } from '../../lib/stats'
+import { decadeMean, previousRecordHigh, previousRecordLow, tempColor } from '../../lib/dayStats'
 import { Loading, ErrorState } from '../../components/States'
+import DateNav from '../../components/DateNav'
 import PeriodScatter from '../../components/PeriodScatter'
 
-export default function DayView({ mmdd, isToday }: { mmdd: string; isToday: boolean }) {
+const MIN = new Date(1833, 0, 1)
+const midnight = (d: Date) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x }
+
+export default function DayView() {
+  const [date, setDate] = useState<Date>(() => midnight(new Date()))
+  const max = midnight(new Date())
+  const mmdd = mmddOf(date)
+  const year = date.getFullYear()
+  const isReal = isoOf(date) === todayISO()
+
   const { data, loading, error } = useThisDay(mmdd)
   const live = useTodayTemp()
   const dayNorm = useDayNorm()
-  const { summary } = useSummary()
   if (loading) return <Loading label="Loading day…" />
   if (error || !data) return <ErrorState label="Could not load this date." />
 
-  const ld = isToday ? live.data : null
-  const r = ld ? rankOf(ld.tmax, data.series.map(s => s.tmax)) : null
-  const isHotRecord = ld != null && ld.tmax > data.recordHigh.v
-  const isColdRecord = ld != null && ld.tmin < data.recordLow.v
-  const heroClass = isHotRecord ? 'rounded-xl border-2 border-warm bg-warm/5 p-5'
-    : isColdRecord ? 'rounded-xl border-2 border-accent bg-accent/5 p-5'
-    : 'rounded-xl border border-border bg-surface p-5'
-  const recordCount = summary?.records ? (isHotRecord ? summary.records.highs : summary.records.lows) : 0
-  const entry = dayNorm.data?.['1991-2020']?.find(n => n.mmdd === mmdd)
-  const startYear = summary?.annual?.[0]?.year ?? 1833
+  const normal = dayNorm.data?.['1991-2020']?.find(n => n.mmdd === mmdd)?.normal ?? null
+  const entry = data.series.find(s => s.year === year)
 
-  let allTime: { rank: number; kind: 'warmest' | 'coldest' } | null = null
-  if (ld && summary?.extremes) {
-    const today = todayISO()
-    const warmVals = summary.extremes.warmest.filter(e => e.date !== today).map(e => e.v)
-    const coldVals = summary.extremes.coldest.filter(e => e.date !== today).map(e => e.v)
-    const wRank = allTimeRank(warmVals, ld.tmax, 'warm')
-    const cRank = allTimeRank(coldVals, ld.tmin, 'cold')
-    if (wRank <= 10) allTime = { rank: wRank, kind: 'warmest' }
-    else if (cRank <= 10) allTime = { rank: cRank, kind: 'coldest' }
-  }
+  let maxV: number | null = null, secondV: number | null = null, secondLabel = 'min'
+  if (isReal && live.data) { maxV = live.data.tmax; secondV = live.data.temp; secondLabel = 'current' }
+  else if (entry) { maxV = entry.tmax; secondV = entry.tmin; secondLabel = 'min' }
+
+  const brokeHigh = entry != null && data.recordHigh.year === year
+  const brokeLow = entry != null && data.recordLow.year === year
+  const prevHigh = brokeHigh ? previousRecordHigh(data.series, year) : null
+  const prevLow = brokeLow ? previousRecordLow(data.series, year) : null
+
+  const r = maxV != null ? rankOf(maxV, data.series.map(s => s.tmax)) : null
+
+  const recentFrom = year - 11, recentTo = year - 1
+  const thenFrom = year - 111, thenTo = year - 101
+  const recentMean = decadeMean(data.series, recentFrom, recentTo)
+  const thenMean = decadeMean(data.series, thenFrom, thenTo)
+
+  const goToYear = (y: number) => setDate(midnight(new Date(y, date.getMonth(), date.getDate())))
 
   return (
     <div className="space-y-4">
-      {isToday && (
-        <div className={heroClass}>
-          <p className="text-[11px] uppercase tracking-[0.09em] text-muted">Today · Uccle, Brussels</p>
-          {live.error ? <p className="mt-1 text-sm text-muted">Live temperature unavailable — showing records only.</p>
-            : live.loading ? <p className="mt-1 text-sm text-muted">Fetching today…</p>
-            : <div className="mt-1 flex items-end gap-3">
-                <span className="text-[46px] font-extrabold leading-none">{fmtTemp(live.data!.temp)}</span>
-                <span className="pb-1.5 text-sm text-muted">max {fmtTemp(live.data!.tmax)}</span>
-              </div>}
-          {(isHotRecord || isColdRecord) && (
-            <p className={`mt-2 flex items-center gap-2 text-sm font-semibold ${isHotRecord ? 'text-warm' : 'text-accent'}`}>
-              {isHotRecord ? <Flame size={16} aria-hidden /> : <Snowflake size={16} aria-hidden />}
-              <span>{isHotRecord ? 'New record high for this date!' : 'New record low for this date!'}
-                {recordCount > 0 && ` ${recordCount} ${isHotRecord ? 'heat' : 'cold'} records set in ${summary!.records.year}.`}</span>
-            </p>
-          )}
-          {r && <p className="mt-3 inline-block rounded-full bg-badge-bg px-3 py-1 text-xs font-semibold text-badge-fg">
-            {ordinal(r.rank)} warmest on this date in {r.total} years</p>}
-          {allTime && <p className={`mt-2 text-sm font-semibold ${allTime.kind === 'warmest' ? 'text-warm' : 'text-accent'}`}>
-            {ordinal(allTime.rank)} {allTime.kind} day since {startYear}</p>}
-          {entry?.normal != null && live.data != null && (
-            <p className="mt-3 text-sm text-muted">
-              Today averages <strong className="text-fg">{Math.abs(meanAnomaly(live.data.tmax, live.data.tmin, entry.normal))} °C {meanAnomaly(live.data.tmax, live.data.tmin, entry.normal) >= 0 ? 'above' : 'below'}</strong> the 1991–2020 normal ({entry.normal} °C) for this date.
-            </p>
-          )}
-        </div>
-      )}
+      <div className="rounded-xl border border-border bg-surface p-5">
+        <DateNav date={date} min={MIN} max={max} onChange={d => setDate(midnight(d))} />
+        {maxV != null ? (
+          <div className="mt-4 flex items-end gap-6">
+            <div>
+              <span className={`text-[40px] font-extrabold leading-none ${tempColor(maxV, normal)}`}>{fmtTemp(maxV)}</span>
+              <p className="mt-1 text-xs text-muted">max</p>
+            </div>
+            {secondV != null && (
+              <div>
+                <span className={`text-[40px] font-extrabold leading-none ${tempColor(secondV, normal)}`}>{fmtTemp(secondV)}</span>
+                <p className="mt-1 text-xs text-muted">{secondLabel}</p>
+              </div>
+            )}
+          </div>
+        ) : <p className="mt-4 text-sm text-muted">No data for this date.</p>}
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div className="rounded-xl border border-border bg-surface p-4">
+        {(brokeHigh || brokeLow) && (
+          <p className={`mt-3 flex items-center gap-2 text-sm font-semibold ${brokeHigh ? 'text-warm' : 'text-accent'}`}>
+            {brokeHigh ? <Flame size={16} aria-hidden /> : <Snowflake size={16} aria-hidden />}
+            <span>
+              {brokeHigh ? 'Record high for this date!' : 'Record low for this date!'}
+              {brokeHigh && prevHigh && ` Previous: ${fmtTemp(prevHigh.v)} (${prevHigh.year})`}
+              {brokeLow && prevLow && ` Previous: ${fmtTemp(prevLow.v)} (${prevLow.year})`}
+            </span>
+          </p>
+        )}
+
+        {r && <p className="mt-3 inline-block rounded-full bg-badge-bg px-3 py-1 text-xs font-semibold text-badge-fg">
+          {ordinal(r.rank)} warmest on this date in {r.total} years</p>}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <button type="button" onClick={() => goToYear(data.recordHigh.year)}
+          className="rounded-xl border border-border bg-surface p-4 text-left transition-colors hover:border-warm">
           <p className="text-[11px] uppercase tracking-[0.09em] text-muted">Record high</p>
           <p className="mt-1 text-lg font-bold text-warm">{fmtTemp(data.recordHigh.v)}</p>
           <p className="text-xs text-muted">{data.recordHigh.year}</p>
-        </div>
-        <div className="rounded-xl border border-border bg-surface p-4">
+        </button>
+        <button type="button" onClick={() => goToYear(data.recordLow.year)}
+          className="rounded-xl border border-border bg-surface p-4 text-left transition-colors hover:border-accent">
           <p className="text-[11px] uppercase tracking-[0.09em] text-muted">Record low</p>
           <p className="mt-1 text-lg font-bold text-accent">{fmtTemp(data.recordLow.v)}</p>
           <p className="text-xs text-muted">{data.recordLow.year}</p>
-        </div>
+        </button>
       </div>
 
-      <div className="rounded-xl border border-border bg-surface p-4">
-        <p className="text-[11px] uppercase tracking-[0.09em] text-muted">Then vs now</p>
-        <p className="mt-1 text-sm">
-          {fmtTemp(data.thenNow.early.mean)} <span className="text-muted">({data.thenNow.early.from}–{data.thenNow.early.to})</span>
-          {' → '}<strong>{fmtTemp(data.thenNow.recent.mean)}</strong> <span className="text-muted">({data.thenNow.recent.from}–{data.thenNow.recent.to})</span>
-        </p>
-      </div>
+      {thenMean != null && (
+        <div className="rounded-xl border border-border bg-surface p-4">
+          <p className="text-[11px] uppercase tracking-[0.09em] text-muted">Then vs now</p>
+          <p className="mt-1 text-sm">
+            {fmtTemp(thenMean)} <span className="text-muted">({thenFrom}–{thenTo})</span>
+            {' → '}<strong>{fmtTemp(recentMean)}</strong> <span className="text-muted">({recentFrom}–{recentTo})</span>
+          </p>
+        </div>
+      )}
 
       <PeriodScatter title="Every year on this date"
         data={data.series}

@@ -33,10 +33,11 @@ test('today shows max + current, both colored, date line', async () => {
 
 test('navigating to the record year shows the record-broken banner + previous record, and records are clickable', async () => {
   vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
-  render(<DayView />)
-  await waitFor(() => screen.getByLabelText('Pick a date'))
+  const { container } = render(<DayView />)
+  await waitFor(() => expect(container.querySelector('input[type="date"]')).toBeTruthy())
   // jump to 1955-06-28 (the record-high year)
-  fireEvent.change(screen.getByLabelText('Pick a date'), { target: { value: '1955-06-28' } })
+  const input = container.querySelector('input[type="date"]') as HTMLInputElement
+  fireEvent.change(input, { target: { value: '1955-06-28' } })
   await waitFor(() => expect(screen.getByText(/Record high for this date/i)).toBeInTheDocument())
   expect(screen.getByText(/Previous: 22.0 °C \(1925\)/)).toBeInTheDocument()
   expect(screen.getAllByText('34.8 °C')).toHaveLength(2)  // max from series for 1955 (hero + button)
@@ -45,9 +46,10 @@ test('navigating to the record year shows the record-broken banner + previous re
 
 test('then-vs-now uses viewed-year-relative 100yr decades', async () => {
   vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
-  render(<DayView />)
-  await waitFor(() => screen.getByLabelText('Pick a date'))
-  fireEvent.change(screen.getByLabelText('Pick a date'), { target: { value: '2025-06-28' } })
+  const { container } = render(<DayView />)
+  await waitFor(() => expect(container.querySelector('input[type="date"]')).toBeTruthy())
+  const input = container.querySelector('input[type="date"]') as HTMLInputElement
+  fireEvent.change(input, { target: { value: '2025-06-28' } })
   // recent = 2014..2024 (series: 2015,2020,2024), then = 1914..1924 (series: 1923)
   await waitFor(() => expect(screen.getByText(/1914–1924/)).toBeInTheDocument())
   expect(screen.getByText(/2014–2024/)).toBeInTheDocument()
@@ -55,11 +57,12 @@ test('then-vs-now uses viewed-year-relative 100yr decades', async () => {
 
 test('then-vs-now row hidden when recent window is empty', async () => {
   vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
-  render(<DayView />)
-  await waitFor(() => screen.getByLabelText('Pick a date'))
+  const { container } = render(<DayView />)
+  await waitFor(() => expect(container.querySelector('input[type="date"]')).toBeTruthy())
   // navigate to 1930-06-28: recent = 1919..1929 (no series), then = 1819..1829 (no series)
   // then both windows empty, row should be hidden
-  fireEvent.change(screen.getByLabelText('Pick a date'), { target: { value: '1930-06-28' } })
+  const input = container.querySelector('input[type="date"]') as HTMLInputElement
+  fireEvent.change(input, { target: { value: '1930-06-28' } })
   await waitFor(() => expect(screen.queryByText(/Then vs now/i)).not.toBeInTheDocument())
 })
 

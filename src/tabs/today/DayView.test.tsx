@@ -52,3 +52,13 @@ test('then-vs-now uses viewed-year-relative 100yr decades', async () => {
   await waitFor(() => expect(screen.getByText(/1914–1924/)).toBeInTheDocument())
   expect(screen.getByText(/2014–2024/)).toBeInTheDocument()
 })
+
+test('then-vs-now row hidden when recent window is empty', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
+  render(<DayView />)
+  await waitFor(() => screen.getByLabelText('Pick a date'))
+  // navigate to 1930-06-28: recent = 1919..1929 (no series), then = 1819..1829 (no series)
+  // then both windows empty, row should be hidden
+  fireEvent.change(screen.getByLabelText('Pick a date'), { target: { value: '1930-06-28' } })
+  await waitFor(() => expect(screen.queryByText(/Then vs now/i)).not.toBeInTheDocument())
+})

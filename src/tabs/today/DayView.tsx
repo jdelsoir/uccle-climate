@@ -33,8 +33,8 @@ export default function DayView() {
   if (isReal && live.data) { maxV = live.data.tmax; secondV = live.data.temp; secondLabel = 'current' }
   else if (entry) { maxV = entry.tmax; secondV = entry.tmin; secondLabel = 'min' }
 
-  const brokeHigh = entry != null && data.recordHigh.year === year
-  const brokeLow = entry != null && data.recordLow.year === year
+  const brokeHigh = data.recordHigh.year === year
+  const brokeLow = data.recordLow.year === year
   const prevHigh = brokeHigh ? previousRecordHigh(data.series, year) : null
   const prevLow = brokeLow ? previousRecordLow(data.series, year) : null
 
@@ -45,7 +45,11 @@ export default function DayView() {
   const recentMean = decadeMean(data.series, recentFrom, recentTo)
   const thenMean = decadeMean(data.series, thenFrom, thenTo)
 
-  const goToYear = (y: number) => setDate(midnight(new Date(y, date.getMonth(), date.getDate())))
+  const goToYear = (y: number) => {
+    const m = date.getMonth()
+    const d = Math.min(date.getDate(), new Date(y, m + 1, 0).getDate())
+    setDate(midnight(new Date(y, m, d)))
+  }
 
   return (
     <div className="space-y-4">
@@ -96,7 +100,7 @@ export default function DayView() {
         </button>
       </div>
 
-      {thenMean != null && (
+      {thenMean != null && recentMean != null && (
         <div className="rounded-xl border border-border bg-surface p-4">
           <p className="text-[11px] uppercase tracking-[0.09em] text-muted">Then vs now</p>
           <p className="mt-1 text-sm">

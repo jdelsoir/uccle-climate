@@ -5,15 +5,18 @@ import Today from './Today'
 vi.mock('recharts', async (o) => { const a = await o<typeof import('recharts')>()
   return { ...a, ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div style={{ width: 800, height: 300 }}>{children}</div> } })
 
-const thisday = { mmdd: '0626', recordHigh: { v: 34.8, year: 1947 }, recordLow: { v: 4.1, year: 1923 },
-  series: [{ year: 2020, tmax: 33, tmin: 20 }], thenNow: { early: { from: 1833, to: 1900, mean: 18 }, recent: { from: 1996, to: 2025, mean: 21 } } }
+const thisday = { mmdd: '0628', recordHigh: { v: 34.8, year: 1955 }, recordLow: { v: 4.1, year: 1923 },
+  series: [{ year: 2020, tmax: 31, tmin: 17 }], thenNow: { early: { from: 1833, to: 1900, mean: 18 }, recent: { from: 1996, to: 2025, mean: 21 } } }
+const daynorm = { '1991-2020': [{ doy: 180, mmdd: '0628', normal: 24, p10: 18, p90: 30 }], '1961-1990': [] }
 const month = { mm: '06', series: [{ year: 2020, mean: 19, complete: true }], recordWarm: { year: 2020, v: 19 }, recordCold: { year: 2020, v: 19 }, normal: 17, thenNow: { early: { from: 1833, to: 1900, mean: 15 }, recent: { from: 1996, to: 2025, mean: 18 } } }
 const summary = { station: {}, baselines: { '1991-2020': 10, '1961-1990': 10 }, annual: [{ year: 2026, mean: 11, tmin: 6, tmax: 16, incomplete: true }, { year: 2025, mean: 12, tmin: 7, tmax: 17, incomplete: false }],
   anomaly: { '1991-2020': [], '1961-1990': [] }, decadal: [], warmingRate: { full: 0, last30: 0 }, records: { year: 2026, highs: 0, lows: 0 },
   extremes: { warmest: [], coldest: [] }, counters: { SU: [], hot30: [], TR: [], FD: [], ID: [], heatwaveDays: [], gsl: [] }, rankings: { warmest: [{ year: 2025, mean: 12 }], coldest: [{ year: 2025, mean: 12 }] } }
+const live = { current: { time: '2026-06-28T12:00', temperature_2m: 27 }, daily: { time: ['2026-06-28'], temperature_2m_max: [29], temperature_2m_min: [16] } }
 
 function routeFetch(u: string) {
-  if (u.includes('open-meteo')) return { current: { temperature_2m: 20 }, daily: { temperature_2m_max: [21], temperature_2m_min: [12] } }
+  if (u.includes('open-meteo')) return live
+  if (u.includes('daynorm')) return daynorm
   if (u.includes('/month/')) return month
   if (u.includes('summary.json')) return summary
   return thisday

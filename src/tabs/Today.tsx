@@ -4,26 +4,16 @@ import MonthView from './today/MonthView'
 import YearView from './today/YearView'
 import Stepper from '../components/Stepper'
 import { useSummary } from '../data/useSummary'
-import { todayMMDD, fmtDayLabel, fmtMonth } from '../lib/format'
+import { fmtMonth } from '../lib/format'
 
 type Mode = 'day' | 'month' | 'year'
 const MODES: Mode[] = ['day', 'month', 'year']
 const HEADINGS: Record<Mode, string> = { day: 'This Day in History', month: 'This Month in History', year: 'This Year in History' }
 
-// 366 calendar mmdd strings (leap year), for day stepping.
-const CAL: string[] = (() => {
-  const out: string[] = []
-  const d = new Date(Date.UTC(2000, 0, 1))
-  for (let i = 0; i < 366; i++) { out.push(`${String(d.getUTCMonth() + 1).padStart(2, '0')}${String(d.getUTCDate()).padStart(2, '0')}`); d.setUTCDate(d.getUTCDate() + 1) }
-  return out
-})()
-
 export default function Today() {
   const { summary } = useSummary()
   const now = new Date()
-  const realToday = todayMMDD()
   const [mode, setMode] = useState<Mode>('day')
-  const [mmdd, setMmdd] = useState(realToday)
   const [month, setMonth] = useState(now.getMonth() + 1)
   const [year, setYear] = useState<number | null>(null)
 
@@ -33,15 +23,8 @@ export default function Today() {
   const selYear = year ?? maxYear
   const mm = String(month).padStart(2, '0')
 
-  const stepDay = (d: number) => { const i = CAL.indexOf(mmdd); setMmdd(CAL[(i + d + 366) % 366]) }
   const stepMonth = (d: number) => setMonth(((month - 1 + d + 12) % 12) + 1)
   const stepYear = (d: number) => setYear(Math.min(maxYear, Math.max(minYear, selYear + d)))
-
-  const stepper = mode === 'day'
-    ? <Stepper label={fmtDayLabel(mmdd)} onPrev={() => stepDay(-1)} onNext={() => stepDay(1)} unit="day" />
-    : mode === 'month'
-      ? <Stepper label={fmtMonth(mm)} onPrev={() => stepMonth(-1)} onNext={() => stepMonth(1)} unit="month" />
-      : <Stepper label={String(selYear)} onPrev={() => stepYear(-1)} onNext={() => stepYear(1)} prevDisabled={selYear <= minYear} nextDisabled={selYear >= maxYear} unit="year" />
 
   return (
     <section className="fade-in space-y-4">
@@ -54,9 +37,12 @@ export default function Today() {
         ))}
       </div>
 
-      <div className="rounded-xl border border-border bg-surface p-2">{stepper}</div>
+      {mode === 'month' && <div className="rounded-xl border border-border bg-surface p-2">
+        <Stepper label={fmtMonth(mm)} onPrev={() => stepMonth(-1)} onNext={() => stepMonth(1)} unit="month" /></div>}
+      {mode === 'year' && <div className="rounded-xl border border-border bg-surface p-2">
+        <Stepper label={String(selYear)} onPrev={() => stepYear(-1)} onNext={() => stepYear(1)} prevDisabled={selYear <= minYear} nextDisabled={selYear >= maxYear} unit="year" /></div>}
 
-      {mode === 'day' && <DayView mmdd={mmdd} isToday={mmdd === realToday} />}
+      {mode === 'day' && <DayView />}
       {mode === 'month' && <MonthView mm={mm} currentYear={now.getFullYear()} />}
       {mode === 'year' && <YearView year={selYear} />}
     </section>

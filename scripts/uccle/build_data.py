@@ -14,6 +14,13 @@ ARCHIVE_URL = (
 )
 ARCHIVE_START = "1940-01-01"  # ERA5 begins 1940; GHCN-only keeps deep history pre-1940
 
+# Open-Meteo forecast past_days — recent-days fill (covers the gap before ERA5 finalizes).
+RECENT_URL = (
+    "https://api.open-meteo.com/v1/forecast?latitude=50.8&longitude=4.36"
+    "&daily=temperature_2m_max,temperature_2m_min&timezone=Europe/Brussels"
+    "&past_days={days}&forecast_days=1"
+)
+
 
 def merge_fills(recs, archive=None, recent=None, today=None, lag=5):
     """GHCN records are authoritative; fill remaining dates from ERA5 archive,
@@ -48,6 +55,21 @@ def fetch_archive(start, end):
     """Fetch Open-Meteo ERA5 daily max/min into {date: {tmax, tmin}}."""
     url = ARCHIVE_URL.format(start=start, end=end)
     with urllib.request.urlopen(url, timeout=180) as resp:
+        j = json.loads(resp.read())
+    daily = j["daily"]
+    out = {}
+    for i, dstr in enumerate(daily["time"]):
+        out[dt.date.fromisoformat(dstr)] = {
+            "tmax": daily["temperature_2m_max"][i],
+            "tmin": daily["temperature_2m_min"][i],
+        }
+    return out
+
+
+def fetch_recent(days=7):
+    """Fetch Open-Meteo forecast recent days into {date: {tmax, tmin}}."""
+    url = RECENT_URL.format(days=days)
+    with urllib.request.urlopen(url, timeout=60) as resp:
         j = json.loads(resp.read())
     daily = j["daily"]
     out = {}
@@ -133,14 +155,21 @@ def _write(path, obj):
 def main():
     with urllib.request.urlopen(DLY_URL, timeout=120) as resp:
         text = resp.read().decode("utf-8", "replace")
-    end = dt.date.today().isoformat()
+    today = dt.date.today()
+    end = (today - dt.timedelta(days=1)).isoformat()   # cutoff: live app owns today
     try:
         archive = fetch_archive(ARCHIVE_START, end)
         print(f"Fetched {len(archive)} archive days {ARCHIVE_START}..{end}")
-    except Exception as e:  # archive is a best-effort enhancement; never fail the build on it
+    except Exception as e:  # best-effort enhancement; never fail the build on it
         archive = None
-        print(f"WARNING: archive fetch failed ({e}); building from GHCN only")
-    build(text=text, archive=archive)
+        print(f"WARNING: archive fetch failed ({e}); building without ERA5 fill")
+    try:
+        recent = fetch_recent()
+        print(f"Fetched {len(recent)} recent forecast days")
+    except Exception as e:  # best-effort; degrade to archive/GHCN only
+        recent = None
+        print(f"WARNING: recent fetch failed ({e}); building without forecast fill")
+    build(text=text, archive=archive, recent=recent, today=today)
     print("Wrote public/data/")
 
 

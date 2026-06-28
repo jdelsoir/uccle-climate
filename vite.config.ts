@@ -25,10 +25,16 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,json,png,svg,webmanifest}'],
-        globIgnores: ['**/data/thisday/**'],
+        // Precache the app shell only (no JSON). Data is served NetworkFirst so an
+        // installed app always gets the daily-refreshed data when online, with a cache
+        // fallback offline. (Old CacheFirst 'thisday' never revalidated → stale recent days.)
+        globPatterns: ['**/*.{js,css,html,png,svg,webmanifest}'],
+        globIgnores: ['**/data/**'],
         runtimeCaching: [
-          { urlPattern: /\/data\/thisday\/.*\.json$/, handler: 'CacheFirst', options: { cacheName: 'thisday' } },
+          { urlPattern: /\/data\/.*\.json$/, handler: 'NetworkFirst',
+            options: { cacheName: 'climate-data', networkTimeoutSeconds: 5,
+              expiration: { maxEntries: 400, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] } } },
           { urlPattern: /^https:\/\/api\.open-meteo\.com\/.*/, handler: 'NetworkFirst', options: { cacheName: 'open-meteo', networkTimeoutSeconds: 5 } },
         ],
       },

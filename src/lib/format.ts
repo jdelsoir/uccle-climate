@@ -30,3 +30,9 @@ export const ordinal = (n: number): string => {
   const s = ['th', 'st', 'nd', 'rd'], v = n % 100
   return n + (s[(v - 20) % 10] || s[v] || s[0])
 }
+
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+export const fmtWeekday = (d: Date): string => WEEKDAYS[d.getDay()]
+export const ordinalDay = (n: number): string => ordinal(n)
+export const isoOf = (d: Date): string =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`

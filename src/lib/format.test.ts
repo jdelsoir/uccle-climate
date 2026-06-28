@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { mmddOf, todayMMDD, fmtTemp, fmtDate, fmtMonth, fmtDayLabel, todayISO, ordinal } from './format'
+import { mmddOf, todayMMDD, fmtTemp, fmtDate, fmtMonth, fmtDayLabel, todayISO, ordinal, fmtWeekday, ordinalDay, isoOf } from './format'
 
 describe('mmddOf', () => {
   it('zero-pads month and day', () => {
@@ -59,5 +59,13 @@ describe('ordinal', () => {
     expect(ordinal(4)).toBe('4th')
     expect(ordinal(11)).toBe('11th')
     expect(ordinal(22)).toBe('22nd')
+  })
+})
+
+describe('date helpers', () => {
+  it('fmtWeekday / ordinalDay / isoOf', () => {
+    expect(fmtWeekday(new Date(2026, 5, 28))).toBe('Sunday')   // 2026-06-28 is a Sunday
+    expect(ordinalDay(1)).toBe('1st'); expect(ordinalDay(28)).toBe('28th')
+    expect(isoOf(new Date(2026, 0, 3))).toBe('2026-01-03')
   })
 })

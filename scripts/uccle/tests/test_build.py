@@ -56,11 +56,13 @@ def test_merge_fills_precedence_archive_over_recent():
 def test_merge_fills_cutoff_drops_today_and_future():
     today = dt.date(2026, 6, 28)
     recent = {dt.date(2026, 6, 27): {"tmax": 30.0, "tmin": 18.0},       # yesterday → kept
-              dt.date(2026, 6, 28): {"tmax": 31.0, "tmin": 19.0}}       # today → dropped
+              dt.date(2026, 6, 28): {"tmax": 31.0, "tmin": 19.0},       # today → dropped
+              dt.date(2026, 6, 29): {"tmax": 32.0, "tmin": 20.0}}       # future → dropped
     m = merge_fills([], None, recent, today=today)
     dates = {r["date"] for r in m}
     assert dt.date(2026, 6, 27) in dates
     assert dt.date(2026, 6, 28) not in dates                           # today belongs to live app
+    assert dt.date(2026, 6, 29) not in dates                           # future date dropped too
 
 
 def test_merge_fills_tags_recent_days_provisional():
@@ -68,11 +70,13 @@ def test_merge_fills_tags_recent_days_provisional():
     ghcn = [{"date": dt.date(2026, 6, 25), "tmax": 1.0, "tmin": 1.0, "tmean": 1.0}]  # GHCN, recent
     recent = {
         dt.date(2026, 6, 27): {"tmax": 30.0, "tmin": 18.0},  # within lag → provisional
+        dt.date(2026, 6, 23): {"tmax": 28.0, "tmin": 16.0},  # exactly today-5 (lag edge) → provisional
         dt.date(2026, 6, 20): {"tmax": 25.0, "tmin": 15.0},  # 8 days back → final
     }
     m = merge_fills(ghcn, None, recent, today=today, lag=5)
     byd = {r["date"]: r for r in m}
     assert byd[dt.date(2026, 6, 27)]["provisional"] is True            # filled & within lag
+    assert byd[dt.date(2026, 6, 23)]["provisional"] is True            # inclusive lag boundary today-5
     assert "provisional" not in byd[dt.date(2026, 6, 20)]              # filled but older than lag
     assert "provisional" not in byd[dt.date(2026, 6, 25)]             # GHCN never provisional
 

@@ -15,20 +15,31 @@ ARCHIVE_URL = (
 ARCHIVE_START = "1940-01-01"  # ERA5 begins 1940; GHCN-only keeps deep history pre-1940
 
 
-def merge_archive(recs, archive):
-    """GHCN records are authoritative; Open-Meteo ERA5 fills dates GHCN lacks.
+def merge_fills(recs, archive=None, recent=None, today=None, lag=5):
+    """GHCN records are authoritative; fill remaining dates from ERA5 archive,
+    then from the forecast `recent` dict. Precedence: GHCN > archive > recent.
 
-    recs: list of {date, tmax, tmin, tmean}. archive: {date: {tmax, tmin}}.
+    With `today` set: drop any fill date >= today (the live app owns today), and
+    tag a filled day `provisional=True` when date >= today - lag (ERA5 lag window).
+    GHCN days are never provisional.
     """
     have = {r["date"] for r in recs}
     merged = list(recs)
-    for d, v in archive.items():
-        if d in have:
-            continue
-        tmax, tmin = v.get("tmax"), v.get("tmin")
-        if tmax is None or tmin is None:
-            continue
-        merged.append({"date": d, "tmax": tmax, "tmin": tmin, "tmean": (tmax + tmin) / 2})
+    fills = {}
+    for src in (archive or {}, recent or {}):       # archive first → wins ties
+        for d, v in src.items():
+            if d in have or d in fills:
+                continue
+            if today is not None and d >= today:    # cutoff: only up to yesterday
+                continue
+            tmax, tmin = v.get("tmax"), v.get("tmin")
+            if tmax is None or tmin is None:
+                continue
+            entry = {"date": d, "tmax": tmax, "tmin": tmin, "tmean": (tmax + tmin) / 2}
+            if today is not None and d >= today - dt.timedelta(days=lag):
+                entry["provisional"] = True
+            fills[d] = entry
+    merged.extend(fills.values())
     merged.sort(key=lambda r: r["date"])
     return merged
 
@@ -48,12 +59,12 @@ def fetch_archive(start, end):
     return out
 
 
-def build(text=None, records=None, archive=None, out_dir="public/data"):
+def build(text=None, records=None, archive=None, recent=None, today=None, out_dir="public/data"):
     recs = records if records is not None else daily_records(parse_dly(text))
     if not recs:
         raise SystemExit("No records parsed — aborting (format drift?)")
-    if archive:
-        recs = merge_archive(recs, archive)
+    if archive or recent:
+        recs = merge_fills(recs, archive, recent, today)
     annual = derive.annual_means(recs)
     per_date = derive.per_date(recs)
     latest_year = max(a["year"] for a in annual)

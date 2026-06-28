@@ -152,6 +152,12 @@ def rankings(annual):
     coldest = sorted(valid, key=lambda a: a["mean"])
     return {"warmest": warmest, "coldest": coldest}
 
+def _series_entry(r):
+    e = {"year": r["date"].year, "tmax": r["tmax"], "tmin": r["tmin"]}
+    if r.get("provisional"):
+        e["provisional"] = True
+    return e
+
 def per_date(recs, early=(1833, 1900), recent=(1996, 2025)):
     by_md = defaultdict(list)
     for r in recs:
@@ -164,7 +170,7 @@ def per_date(recs, early=(1833, 1900), recent=(1996, 2025)):
             "mmdd": f"{m:02d}{d:02d}",
             "recordHigh": {"v": hi["tmax"], "year": hi["date"].year},
             "recordLow": {"v": lo["tmin"], "year": lo["date"].year},
-            "series": [{"year": r["date"].year, "tmax": r["tmax"], "tmin": r["tmin"]} for r in rs],
+            "series": [_series_entry(r) for r in rs],
             "thenNow": {
                 "early": {"from": early[0], "to": early[1], "mean": _window_mean(rs, *early)},
                 "recent": {"from": recent[0], "to": recent[1], "mean": _window_mean(rs, *recent)},

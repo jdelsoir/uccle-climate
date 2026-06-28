@@ -87,6 +87,16 @@ def test_build_fills_incomplete_year_from_archive(tmp_path):
     assert y2010["incomplete"] is False  # archive fill makes it a complete year
 
 
+def test_build_flags_recent_provisional_in_thisday(tmp_path):
+    ghcn = recs_for(2026, 100, 18.0)  # 2026-01-01 .. 2026-04-10 (06-27 absent from GHCN)
+    recent = {dt.date(2026, 6, 27): {"tmax": 33.0, "tmin": 22.0}}
+    build(records=ghcn, recent=recent, today=dt.date(2026, 6, 28), out_dir=str(tmp_path))
+    thisday = json.loads((tmp_path / "thisday" / "0627.json").read_text())
+    entry = next(e for e in thisday["series"] if e["year"] == 2026)
+    assert entry["tmax"] == 33.0
+    assert entry["provisional"] is True
+
+
 def test_build_emits_month_files(tmp_path):
     recs = month_recs(2000, 6, 30, 18.0) + month_recs(2020, 6, 30, 20.0)
     build(records=recs, out_dir=str(tmp_path))

@@ -62,3 +62,10 @@ test('then-vs-now row hidden when recent window is empty', async () => {
   fireEvent.change(screen.getByLabelText('Pick a date'), { target: { value: '1930-06-28' } })
   await waitFor(() => expect(screen.queryByText(/Then vs now/i)).not.toBeInTheDocument())
 })
+
+test('on real today, live fetch error shows "Live temperature unavailable."', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) =>
+    u.includes('open-meteo') ? Promise.reject(new Error('net')) : Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
+  render(<DayView />)
+  await waitFor(() => expect(screen.getByText(/Live temperature unavailable/i)).toBeInTheDocument())
+})

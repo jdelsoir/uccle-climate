@@ -55,7 +55,9 @@ export default function DayView() {
     <div className="space-y-4">
       <div className="rounded-xl border border-border bg-surface p-5">
         <DateNav date={date} min={MIN} max={max} onChange={d => setDate(midnight(d))} />
-        {maxV != null ? (
+        {isReal && !live.data ? (
+          <p className="mt-4 text-sm text-muted">{live.error ? 'Live temperature unavailable.' : 'Fetching today…'}</p>
+        ) : maxV != null ? (
           <div className="mt-4 flex items-end gap-6">
             <div>
               <span className={`text-[40px] font-extrabold leading-none ${tempColor(maxV, normal)}`}>{fmtTemp(maxV)}</span>
@@ -68,15 +70,18 @@ export default function DayView() {
               </div>
             )}
           </div>
-        ) : <p className="mt-4 text-sm text-muted">No data for this date.</p>}
+        ) : (
+          <p className="mt-4 text-sm text-muted">No data for this date.</p>
+        )}
 
         {(brokeHigh || brokeLow) && (
           <p className={`mt-3 flex items-center gap-2 text-sm font-semibold ${brokeHigh ? 'text-warm' : 'text-accent'}`}>
             {brokeHigh ? <Flame size={16} aria-hidden /> : <Snowflake size={16} aria-hidden />}
             <span>
               {brokeHigh ? 'Record high for this date!' : 'Record low for this date!'}
-              {brokeHigh && prevHigh && ` Previous: ${fmtTemp(prevHigh.v)} (${prevHigh.year})`}
-              {brokeLow && prevLow && ` Previous: ${fmtTemp(prevLow.v)} (${prevLow.year})`}
+              {brokeHigh
+                ? prevHigh && ` Previous: ${fmtTemp(prevHigh.v)} (${prevHigh.year})`
+                : prevLow && ` Previous: ${fmtTemp(prevLow.v)} (${prevLow.year})`}
             </span>
           </p>
         )}

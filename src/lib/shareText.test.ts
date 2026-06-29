@@ -1,0 +1,51 @@
+import { describe, it, expect } from 'vitest'
+import { shareSentence, shareCaption, APP_URL } from './shareText'
+
+const D = new Date(2026, 5, 29) // Monday June 29 2026
+const base = { date: D, rank: null, firstYear: 1833, prevRecord: null, isToday: true } as const
+
+describe('shareSentence', () => {
+  it('above / today is tentative with rank', () => {
+    expect(shareSentence({ ...base, key: 'above', rank: 26 }))
+      .toBe('Monday June 29 2026 is forecast to be the 26th warmest June 29 since 1833.')
+  })
+  it('above / consolidated is affirmative', () => {
+    expect(shareSentence({ ...base, key: 'above', rank: 26, isToday: false }))
+      .toBe('Monday June 29 2026 was the 26th warmest June 29 since 1833.')
+  })
+  it('record-hot today with a previous record', () => {
+    expect(shareSentence({ ...base, key: 'record-hot', prevRecord: { v: 32.6, year: 1957 } }))
+      .toBe('Monday June 29 2026 is forecast to break the 1957 record — the hottest June 29 since 1833.')
+  })
+  it('record-hot consolidated with a previous record', () => {
+    expect(shareSentence({ ...base, key: 'record-hot', prevRecord: { v: 32.6, year: 1957 }, isToday: false }))
+      .toBe('Monday June 29 2026 broke the 1957 record — the hottest June 29 since 1833.')
+  })
+  it('record-hot with no previous record', () => {
+    expect(shareSentence({ ...base, key: 'record-hot', isToday: false }))
+      .toBe('Monday June 29 2026 was the hottest June 29 on record.')
+  })
+  it('record-cold today with a previous record', () => {
+    expect(shareSentence({ ...base, key: 'record-cold', prevRecord: { v: 1.2, year: 1900 } }))
+      .toBe('Monday June 29 2026 is forecast to break the 1900 cold record for June 29.')
+  })
+  it('close', () => {
+    expect(shareSentence({ ...base, key: 'close' }))
+      .toBe('Monday June 29 2026 is forecast to be a typical June 29.')
+  })
+  it('below / consolidated', () => {
+    expect(shareSentence({ ...base, key: 'below', isToday: false }))
+      .toBe('Monday June 29 2026 was cooler than usual for June 29.')
+  })
+  it('above with null rank falls back to warmer-than-usual', () => {
+    expect(shareSentence({ ...base, key: 'above', rank: null }))
+      .toBe('Monday June 29 2026 is forecast to be warmer than usual for June 29.')
+  })
+})
+
+describe('shareCaption', () => {
+  it('appends the app URL on a new line', () => {
+    expect(shareCaption('X')).toBe(`X\n${APP_URL}`)
+    expect(APP_URL).toBe('https://jdelsoir.github.io/uccle-climate/')
+  })
+})

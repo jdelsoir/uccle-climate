@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { shareSentence, shareCaption, dayShareUrl, APP_URL } from './shareText'
+import { shareSentence, shareCaption, dayShareUrl, monthShareUrl, monthShareCaption, APP_URL } from './shareText'
 
 const D = new Date(2026, 5, 29) // Monday June 29 2026
 const base = { date: D, rank: null, firstYear: 1833, prevRecord: null, isToday: true } as const
@@ -55,5 +55,15 @@ describe('shareCaption', () => {
   it('appends the day deep link on a new line', () => {
     expect(shareCaption('X', new Date(2019, 6, 25)))
       .toBe('X\nhttps://jdelsoir.github.io/uccle-climate/#/today?d=2019-07-25')
+  })
+})
+
+describe('month share', () => {
+  it('builds a ?m= deep link', () => {
+    expect(monthShareUrl(2019, '06')).toBe('https://jdelsoir.github.io/uccle-climate/#/today?m=2019-06')
+  })
+  it('appends the deep link to the sentence', () => {
+    expect(monthShareCaption('June 2019 was warm.', 2019, '06'))
+      .toBe('June 2019 was warm.\nhttps://jdelsoir.github.io/uccle-climate/#/today?m=2019-06')
   })
 })

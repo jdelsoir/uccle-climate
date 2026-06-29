@@ -1,73 +1,39 @@
-import { vi, test, expect, describe, afterEach, beforeEach } from 'vitest'
+// src/lib/share.test.ts
+import { describe, it, expect, vi, afterEach } from 'vitest'
 
-// Mock html-to-image at module level
-vi.mock('html-to-image', () => ({
-  toPng: vi.fn().mockResolvedValue('data:image/png;base64,xxx'),
-}))
-
+vi.mock('html-to-image', () => ({ toPng: vi.fn().mockResolvedValue('data:image/png;base64,AAAA') }))
 import { shareNode } from './share'
 
+afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks() })
+
+function stubFetchBlob() {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ blob: async () => new Blob(['x'], { type: 'image/png' }) }))
+}
+
 describe('shareNode', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    // Mock fetch globally for tests
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        blob: vi.fn().mockResolvedValue(new Blob(['test'], { type: 'image/png' })),
-      })
-    )
+  it('passes caption text to navigator.share when files can be shared', async () => {
+    stubFetchBlob()
+    const share = vi.fn().mockResolvedValue(undefined)
+    vi.stubGlobal('navigator', { canShare: () => true, share })
+    await shareNode(document.createElement('div'), 'x.png', { text: 'hello\nurl' })
+    expect(share).toHaveBeenCalledTimes(1)
+    expect(share.mock.calls[0][0].text).toBe('hello\nurl')
+    expect(Array.isArray(share.mock.calls[0][0].files)).toBe(true)
   })
 
-  afterEach(() => {
-    vi.unstubAllGlobals()
-    vi.restoreAllMocks()
-  })
-
-  test('falls back to download link when navigator.share absent', async () => {
+  it('falls back to clipboard + download when files cannot be shared', async () => {
+    stubFetchBlob()
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    vi.stubGlobal('navigator', { clipboard: { writeText } }) // no canShare
     const click = vi.fn()
-    const createElementSpy = vi.spyOn(document, 'createElement').mockReturnValue({
-      click,
-      href: '',
-      download: '',
-    } as any)
-
-    const node = document.createElement('div')
-    await shareNode(node, 'uccle.png')
-
+    const realCreate = document.createElement.bind(document)
+    vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+      const el = realCreate(tag)
+      if (tag === 'a') (el as HTMLAnchorElement).click = click
+      return el
+    })
+    await shareNode(document.createElement('div'), 'x.png', { text: 'cap' })
+    expect(writeText).toHaveBeenCalledWith('cap')
     expect(click).toHaveBeenCalled()
-    expect(createElementSpy).toHaveBeenCalledWith('a')
-  })
-
-  test('calls navigator.share when available', async () => {
-    const mockShare = vi.fn().mockResolvedValue(undefined)
-    const originalCanShare = navigator.canShare
-    const originalShare = (navigator as any).share
-
-    try {
-      Object.defineProperty(navigator, 'canShare', {
-        value: vi.fn().mockReturnValue(true),
-        configurable: true,
-      })
-      Object.defineProperty(navigator, 'share', {
-        value: mockShare,
-        configurable: true,
-      })
-
-      const node = document.createElement('div')
-      await shareNode(node, 'uccle.png')
-
-      expect(mockShare).toHaveBeenCalled()
-    } finally {
-      // Restore
-      Object.defineProperty(navigator, 'canShare', {
-        value: originalCanShare,
-        configurable: true,
-      })
-      Object.defineProperty(navigator, 'share', {
-        value: originalShare,
-        configurable: true,
-      })
-    }
   })
 })

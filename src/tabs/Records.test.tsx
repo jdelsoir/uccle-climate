@@ -1,4 +1,5 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 import Records from './Records'
 
@@ -18,77 +19,59 @@ const summary = {
   rankings: { warmest: [], coldest: [] },
 }
 
-afterEach(() => vi.unstubAllGlobals())
-
 const openMeteoPayload = {
   current: { time: '2026-06-25T12:00', temperature_2m: 38 },
   daily: { time: ['2026-06-25'], temperature_2m_max: [38], temperature_2m_min: [20] },
 }
 
-test('defaults to Warmest and lists records with dates', async () => {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn().mockImplementation((u: string) =>
-      Promise.resolve({
-        ok: true,
-        json: async () => (u.includes('open-meteo') ? openMeteoPayload : summary),
-      })
-    )
-  )
-  render(<Records />)
-  await waitFor(() => expect(screen.getByText('36.6 °C')).toBeInTheDocument())
-  expect(screen.getByText('25 Jun 1947')).toBeInTheDocument()
-  expect(screen.getByRole('radio', { name: /warmest/i })).toHaveAttribute('aria-checked', 'true')
-  // cold record not shown by default
-  expect(screen.queryByText('-19.5 °C')).not.toBeInTheDocument()
+afterEach(() => vi.unstubAllGlobals())
+
+function stub(s: unknown = summary, live: unknown = openMeteoPayload) {
+  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) =>
+    Promise.resolve({ ok: true, json: async () => (u.includes('open-meteo') ? live : s) })))
+}
+const renderRecords = () => render(<MemoryRouter><Records /></MemoryRouter>)
+
+test('Warmest is selected by default with a solid red fill', async () => {
+  stub(); renderRecords()
+  const warmBtn = await screen.findByRole('radio', { name: /warmest/i })
+  expect(warmBtn).toHaveAttribute('aria-checked', 'true')
+  expect(warmBtn.className).toContain('bg-warm')
+  expect(warmBtn.className).toContain('text-white')
 })
 
-test('toggles to Coldest', async () => {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn().mockImplementation((u: string) =>
-      Promise.resolve({
-        ok: true,
-        json: async () => (u.includes('open-meteo') ? openMeteoPayload : summary),
-      })
-    )
-  )
-  render(<Records />)
-  await waitFor(() => screen.getByText('36.6 °C'))
+test('rows are links to the Day view for that date, with warm accent', async () => {
+  stub(); renderRecords()
+  const link = await screen.findByRole('link', { name: /25 Jun 1947/i })
+  expect(link).toHaveAttribute('href', '/today?d=1947-06-25')
+  expect(link.querySelector('.text-warm')).toBeTruthy()
+})
+
+test('toggling to Coldest swaps data, accent to blue, and shows a solid blue fill', async () => {
+  stub(); renderRecords()
+  await screen.findByRole('link', { name: /25 Jun 1947/i })
   fireEvent.click(screen.getByRole('radio', { name: /coldest/i }))
-  expect(screen.getByText('-19.5 °C')).toBeInTheDocument()
-  expect(screen.getByText('26 Jan 1942')).toBeInTheDocument()
-  expect(screen.queryByText('36.6 °C')).not.toBeInTheDocument()
+  const coldBtn = screen.getByRole('radio', { name: /coldest/i })
+  expect(coldBtn).toHaveAttribute('aria-checked', 'true')
+  expect(coldBtn.className).toContain('bg-accent')
+  expect(coldBtn.className).toContain('text-white')
+  const link = screen.getByRole('link', { name: /26 Jan 1942/i })
+  expect(link).toHaveAttribute('href', '/today?d=1942-01-26')
+  expect(link.querySelector('.text-accent')).toBeTruthy()
+  expect(screen.queryByRole('link', { name: /25 Jun 1947/i })).not.toBeInTheDocument()
 })
 
-test('merges live today into the warmest list at its rank', async () => {
-  // summary warmest top values 39.7, 36.4; live today 38.0 should appear between them
-  const s = {
-    ...summary,
-    extremes: {
-      warmest: [
-        { date: '2019-07-25', v: 39.7 },
-        { date: '2026-06-25', v: 36.4 },
-      ],
-      coldest: [],
-    },
-  }
-  vi.stubGlobal(
-    'fetch',
-    vi.fn().mockImplementation((u: string) =>
-      Promise.resolve({
-        ok: true,
-        json: async () =>
-          u.includes('open-meteo')
-            ? {
-                current: { time: '2026-06-26T12:00', temperature_2m: 38 },
-                daily: { time: ['2026-06-26'], temperature_2m_max: [38], temperature_2m_min: [20] },
-              }
-            : s,
-      })
-    )
-  )
-  render(<Records />)
-  await waitFor(() => expect(screen.getByText('38.0 °C')).toBeInTheDocument())
-  expect(screen.getByText(/25 Jun 2026/)).toBeInTheDocument() // today appears in the list
+test('rows are flat — no per-row card border, list uses dividers', async () => {
+  stub(); renderRecords()
+  const link = await screen.findByRole('link', { name: /25 Jun 1947/i })
+  expect(link.closest('li')!.className).not.toMatch(/border|rounded/)
+  expect(link.closest('ol')!.className).toContain('divide-y')
+})
+
+test("today's live datum still merges into the list", async () => {
+  const s = { ...summary, extremes: { warmest: [{ date: '2019-07-25', v: 39.7 }, { date: '2026-06-25', v: 36.4 }], coldest: [] } }
+  const live = { current: { time: '2026-06-26T12:00', temperature_2m: 38 }, daily: { time: ['2026-06-26'], temperature_2m_max: [38], temperature_2m_min: [20] } }
+  stub(s, live); renderRecords()
+  expect(await screen.findByRole('link', { name: /39\.7 °C/i })).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: /38\.0 °C/ })).toBeInTheDocument() // live today merged at 38.0
 })

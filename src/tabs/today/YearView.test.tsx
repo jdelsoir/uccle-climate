@@ -5,28 +5,43 @@ import YearView from './YearView'
 vi.mock('recharts', async (o) => { const a = await o<typeof import('recharts')>()
   return { ...a, ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div style={{ width: 800, height: 300 }}>{children}</div> } })
 
-const summary = { station: { id: '', name: '', lat: 0, lon: 0 }, baselines: { '1991-2020': 10, '1961-1990': 10 },
-  annual: [{ year: 2000, mean: 10.5, tmin: 6, tmax: 15, incomplete: false }, { year: 2020, mean: 12.1, tmin: 8, tmax: 16, incomplete: false }],
-  anomaly: { '1991-2020': [{ year: 2000, v: 0.5 }, { year: 2020, v: 2.1 }], '1961-1990': [] }, decadal: [],
-  warmingRate: { full: 0, last30: 0 }, records: { year: 2026, highs: 0, lows: 0 },
-  extremes: { warmest: [], coldest: [] },
-  counters: { SU: [], hot30: [], TR: [], FD: [], ID: [], heatwaveDays: [], gsl: [] },
-  rankings: { warmest: [{ year: 2020, mean: 12.1 }, { year: 2000, mean: 10.5 }], coldest: [{ year: 2000, mean: 10.5 }] } }
+const annual = [
+  { year: 1920, mean: 9.5, tmin: 5, tmax: 14, incomplete: false },
+  { year: 2000, mean: 10.5, tmin: 6, tmax: 15, incomplete: false },
+  { year: 2024, mean: 12.1, tmin: 8, tmax: 16, incomplete: false },
+  { year: 2026, mean: 11.8, tmin: 8, tmax: 16, incomplete: false },
+]
+const summary = { station:{id:'x',name:'Uccle',lat:0,lon:0}, baselines:{'1991-2020':10.5,'1961-1990':9.8},
+  annual, anomaly:{'1991-2020':[{year:2026,v:1.3}],'1961-1990':[]}, decadal:[], warmingRate:{full:0.2,last30:0.3},
+  records:{year:2026,highs:0,lows:0}, extremes:{warmest:[],coldest:[]},
+  counters:{SU:[],hot30:[],TR:[],FD:[],ID:[],heatwaveDays:[],gsl:[]},
+  rankings:{warmest:[{year:2024,mean:12.1},{year:2026,mean:11.8},{year:2000,mean:10.5},{year:1920,mean:9.5}],
+            coldest:[{year:1920,mean:9.5},{year:2000,mean:10.5}]} }
+const summaryIncomplete = {
+  ...summary,
+  annual: summary.annual.map(a => a.year === 2026 ? { ...a, incomplete: true } : a),
+  rankings: { ...summary.rankings, warmest: summary.rankings.warmest.filter(r => r.year !== 2026) },
+}
 
 afterEach(() => vi.unstubAllGlobals())
 
-test('shows selected year mean + rank', async () => {
-  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => summary }))
-  render(<YearView year={2000} />)
-  await waitFor(() => expect(screen.getAllByText('10.5 °C')).toHaveLength(2))  // headline + coldest record
-  expect(screen.getByText(/2nd warmest year/i)).toBeInTheDocument()  // 2000 is 2nd warmest
+test('year: tile, mean, rank, stat cards', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockImplementation(() => Promise.resolve({ ok: true, json: async () => summary })))
+  render(<YearView year={2026} />)
+  await waitFor(() => expect(screen.getByText('11.8 °C')).toBeInTheDocument())  // 2026 annual mean
+  expect(screen.getByText('YEAR')).toBeInTheDocument()
+  expect(screen.getByText('2026')).toBeInTheDocument()
+  expect(screen.getByText(/warmest year/)).toBeInTheDocument()
+  expect(screen.getByText('Average')).toBeInTheDocument()
+  expect(screen.getByText('10.5 °C')).toBeInTheDocument()                       // 1991-2020 baseline
+  expect(screen.getByText('Warmest year')).toBeInTheDocument()
+  expect(screen.getByText('Coldest year')).toBeInTheDocument()
 })
 
-test('incomplete year shows (so far) and no rank badge', async () => {
-  const s = { ...summary, annual: [...summary.annual, { year: 2026, mean: 13.0, tmin: 9, tmax: 18, incomplete: true }] }
-  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => s }))
+test('year incomplete: (so far) label shown, rank badge suppressed', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockImplementation(() => Promise.resolve({ ok: true, json: async () => summaryIncomplete })))
   render(<YearView year={2026} />)
-  await waitFor(() => expect(screen.getByText('13.0 °C')).toBeInTheDocument())
+  await waitFor(() => expect(screen.getByText('11.8 °C')).toBeInTheDocument())
   expect(screen.getByText(/so far/i)).toBeInTheDocument()
-  expect(screen.queryByText(/warmest year in/i)).not.toBeInTheDocument()  // rank badge suppressed
+  expect(screen.queryByText(/warmest year in/i)).not.toBeInTheDocument()
 })

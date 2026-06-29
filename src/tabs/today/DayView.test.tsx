@@ -55,3 +55,27 @@ test('past day: HIGH + LOW (no NOW)', async () => {
   expect(screen.getByText('Low', { selector: 'p' })).toBeInTheDocument()         // hero label (the chart legend's "Low" lives in a <span>)
   expect(screen.queryByText('Now')).not.toBeInTheDocument()
 })
+
+test('today: range bar + stat cards (average, vs average, record high/low) + warming strip', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
+  renderDay(TODAY)
+  await waitFor(() => expect(screen.getByText('Average')).toBeInTheDocument())
+  expect(screen.getByRole('img', { name: /record high/i })).toBeInTheDocument()  // RangeBar summary
+  expect(screen.getByText('17.9 °C')).toBeInTheDocument()                  // 1991-2020 normal (Average card)
+  expect(screen.getByText('Today vs average')).toBeInTheDocument()
+  expect(screen.getByText('+8.9 °C')).toBeInTheDocument()                  // 26.8 - 17.9
+  expect(screen.getByText('Record high')).toBeInTheDocument()              // StatCard label (exact)
+  expect(screen.getByText('32.6 °C')).toBeInTheDocument()                  // record-high value (card)
+  expect(screen.getByText('Record low')).toBeInTheDocument()
+  expect(screen.getByText('5.3 °C')).toBeInTheDocument()
+  expect(screen.getByText(/A warming/)).toBeInTheDocument()                // warming strip
+})
+
+test('today: live fetch error shows "Live temperature unavailable."', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => {
+    if (u.includes('open-meteo')) return Promise.reject(new Error('network error'))
+    return Promise.resolve({ ok: true, json: async () => routeFetch(u) })
+  }))
+  renderDay(TODAY)
+  await waitFor(() => expect(screen.getByText('Live temperature unavailable.')).toBeInTheDocument())
+})

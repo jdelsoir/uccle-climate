@@ -11,16 +11,63 @@ const month = { mm: '06', normal: 17.0,
   thenNow: { early: { from: 1833, to: 1900, mean: 16.1 }, recent: { from: 1996, to: 2025, mean: 18.0 } } }
 afterEach(() => vi.unstubAllGlobals())
 
+type RenderMonthOpts = {
+  cur: { year: number; mean: number; complete: boolean }
+  normal?: number
+  rank?: number
+  completeCount?: number
+  recordWarm?: { v: number; year: number } | null
+  recordCold?: { v: number; year: number } | null
+}
+
+function renderMonth({ cur, normal = 17, rank = 1, completeCount = 10, recordWarm = null, recordCold = null }: RenderMonthOpts) {
+  // Build series so that exactly (rank-1) complete entries have mean > cur.mean, rest have mean < cur.mean
+  const higherCount = rank - 1
+  const lowerCount = completeCount - 1 - higherCount
+  const higherEntries = Array.from({ length: higherCount }, (_, i) => ({ year: 1800 + i, mean: cur.mean + 1 + i, complete: true }))
+  const lowerEntries = Array.from({ length: lowerCount }, (_, i) => ({ year: 1900 + i, mean: normal - 1, complete: true }))
+  const series = [...higherEntries, ...lowerEntries, { year: cur.year, mean: cur.mean, complete: cur.complete }]
+  const data = {
+    mm: '06',
+    normal,
+    series,
+    recordWarm: recordWarm ?? { v: 21, year: 2020 },
+    recordCold: recordCold ?? { v: 13, year: 1880 },
+    thenNow: { early: { from: 1833, to: 1900, mean: 15.0 }, recent: { from: 1996, to: 2025, mean: 17.5 } },
+  }
+  vi.stubGlobal('fetch', vi.fn().mockImplementation(() => Promise.resolve({ ok: true, json: async () => data })))
+  render(<MonthView mm="06" currentYear={cur.year} />)
+}
+
 test('month: tile, mean, rank, stat cards, warming strip', async () => {
   vi.stubGlobal('fetch', vi.fn().mockImplementation(() => Promise.resolve({ ok: true, json: async () => month })))
   render(<MonthView mm="06" currentYear={2026} />)
   await waitFor(() => expect(screen.getByText('18.4')).toBeInTheDocument())      // June 2026 mean (BigTemp number)
   expect(screen.getByText('JUNE')).toBeInTheDocument()                            // tile header
   expect(screen.getByText('2026')).toBeInTheDocument()                            // tile body
-  expect(screen.getByText(/warmest June/)).toBeInTheDocument()                    // rank badge
+  expect(screen.getByText(/A typical June/)).toBeInTheDocument()                  // state banner (delta 1.4° < 2 → close)
   expect(screen.getByText('Average')).toBeInTheDocument()
   expect(screen.getByText('17.0 °C')).toBeInTheDocument()                         // normal
   expect(screen.getByText('Warmest June')).toBeInTheDocument()
   expect(screen.getByText('Coldest June')).toBeInTheDocument()
   expect(screen.getByText(/A warming June/)).toBeInTheDocument()
+})
+
+it('shows the state word, delta line and rank banner for a warm complete month', async () => {
+  renderMonth({ cur: { year: 2026, mean: 20.9, complete: true }, normal: 18, rank: 3, completeCount: 120 })
+  expect(await screen.findByText(/above average/i)).toBeTruthy()
+  expect(screen.getByText('+2.9° above the 1991–2020 average')).toBeTruthy()
+  expect(screen.getByText(/3rd warmest .* in 120 years/i)).toBeTruthy()
+})
+
+it('uses an on-record banner when the current year holds the warmest month', async () => {
+  renderMonth({ cur: { year: 2026, mean: 22, complete: true }, normal: 18, recordWarm: { v: 22, year: 2026 } })
+  expect(await screen.findByText(/record hot broken/i)).toBeTruthy()
+  expect(screen.getByText(/Warmest .* on record/i)).toBeTruthy()
+})
+
+it('shows a "so far" banner and suppresses record/rank for the incomplete current month', async () => {
+  renderMonth({ cur: { year: 2026, mean: 19, complete: false }, normal: 18, recordWarm: { v: 19, year: 2026 } })
+  expect(await screen.findByText(/so far/i)).toBeTruthy()
+  expect(screen.queryByText(/on record/i)).toBeNull()
 })

@@ -64,7 +64,8 @@ Superpowers flow: **brainstorm → design spec → implementation plan → subag
 
 ## Known fast-follows (non-blocking)
 - `useSummary`/`useDayNorm`/`useTodayTemp` lack in-app fetch dedup (SW HTTP-caches; a naive module cache breaks per-test mocks).
-- GitHub Actions Node 20→24 deprecation — bump action versions.
 - Recharts ~600 kB bundle — code-split charts to roughly halve initial JS.
 - **Records/extremes are provisional-blind:** a hot recent day filled from forecast can transiently top a daily record/`summary.extremes` (and fire the Day-view record-broken banner) unflagged until ERA5 finalizes; next daily rebuild self-corrects. About notes it. Could exclude/flag provisional days in records.
-- **Daily cron 60-day auto-disable:** GitHub disables scheduled workflows after 60 days with no repo commits; data deploys don't commit, so a long dev-quiet stretch silently stops `refresh.yml`. Re-enable via `workflow_dispatch`, or add a heartbeat-commit keepalive.
+
+## CI
+- Actions pinned to Node24-runtime majors (checkout@v7, setup-python@v6, setup-node@v6, upload-pages-artifact@v5, deploy-pages@v5; build node 22). `deploy.yml` on push/dispatch/call; `refresh.yml` daily cron; `keepalive.yml` monthly heartbeat commit (`.github/keepalive`, `[skip ci]`) so scheduled workflows survive 60-day dev-quiet windows. Keepalive uses `GITHUB_TOKEN` (doesn't trigger deploy); fallback to a `KEEPALIVE_PAT` if GitHub stops counting bot commits as activity.

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import DayView from './today/DayView'
 import MonthView from './today/MonthView'
@@ -16,8 +17,18 @@ const midnight = (d: Date) => { const x = new Date(d); x.setHours(0, 0, 0, 0); r
 export default function Today() {
   const { summary } = useSummary()
   const now = new Date()
+  const [params] = useSearchParams()
   const [mode, setMode] = useState<Mode>('day')
-  const [date, setDate] = useState<Date>(() => midnight(new Date()))
+  const [date, setDate] = useState<Date>(() => {
+    const d = params.get('d')
+    if (d && /^\d{4}-\d{2}-\d{2}$/.test(d)) {
+      const parsed = midnight(new Date(d + 'T00:00:00'))
+      const lo = midnight(MIN_DATE)
+      const hi = midnight(new Date())
+      if (!isNaN(parsed.getTime()) && parsed >= lo && parsed <= hi) return parsed
+    }
+    return midnight(new Date())
+  })
   const [month, setMonth] = useState(now.getMonth() + 1)
   const [year, setYear] = useState<number | null>(null)
 

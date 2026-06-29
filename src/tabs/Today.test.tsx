@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 import Today from './Today'
 
@@ -27,7 +28,7 @@ afterEach(() => vi.unstubAllGlobals())
 
 test('underline tabs switch mode; day is default', async () => {
   vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
-  render(<Today />)
+  render(<MemoryRouter><Today /></MemoryRouter>)
   expect(screen.getByRole('radio', { name: /day/i })).toHaveAttribute('aria-checked', 'true')
   fireEvent.click(screen.getByRole('radio', { name: /year/i }))
   await waitFor(() => expect(screen.getByRole('radio', { name: /year/i })).toHaveAttribute('aria-checked', 'true'))
@@ -35,9 +36,21 @@ test('underline tabs switch mode; day is default', async () => {
 
 test('header Previous steps the active unit (day) and Today is disabled on today', async () => {
   vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
-  const { container } = render(<Today />)
+  const { container } = render(<MemoryRouter><Today /></MemoryRouter>)
   await waitFor(() => expect(container.querySelector('input[type="date"]')).toBeTruthy())
   expect(screen.getByRole('button', { name: /go to today/i })).toBeDisabled()  // cursor starts at today
   fireEvent.click(screen.getByRole('button', { name: /^previous/i }))
   expect(screen.getByRole('button', { name: /go to today/i })).not.toBeDisabled()  // moved off today
+})
+
+test('deep-links to a specific day via ?d= query param', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
+  render(
+    <MemoryRouter initialEntries={['/today?d=2019-07-25']}>
+      <Today />
+    </MemoryRouter>
+  )
+  // Day is the default mode; the cursor must be 25 Jul 2019, not today (29 Jun 2026)
+  expect(await screen.findByText('JULY')).toBeInTheDocument()
+  expect(screen.getByText('25')).toBeInTheDocument()
 })

@@ -1,4 +1,4 @@
-import { fmtWeekday, fmtMonth, ordinal } from './format'
+import { fmtWeekday, fmtMonth, ordinal, isoOf } from './format'
 import type { HeroKey } from './heroState'
 
 export const APP_URL = 'https://jdelsoir.github.io/uccle-climate/'
@@ -40,6 +40,11 @@ export function shareSentence({ date, key, rank, firstYear, prevRecord, isToday 
   }
 }
 
-export function shareCaption(sentence: string): string {
-  return `${sentence}\n${APP_URL}`
+// Deep link to a specific day (HashRouter ?d= form — Today.tsx reads the param).
+export function dayShareUrl(date: Date): string {
+  return `${APP_URL}#/today?d=${isoOf(date)}`
+}
+
+export function shareCaption(sentence: string, date: Date): string {
+  return `${sentence}\n${dayShareUrl(date)}`
 }

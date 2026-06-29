@@ -78,4 +78,5 @@ test('today: live fetch error shows "Live temperature unavailable."', async () =
   }))
   renderDay(TODAY)
   await waitFor(() => expect(screen.getByText('Live temperature unavailable.')).toBeInTheDocument())
+  expect(screen.queryByText(/warmest/i)).not.toBeInTheDocument()
 })

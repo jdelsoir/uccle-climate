@@ -33,7 +33,7 @@ export default function DayView({ date, min, max, onChange }: { date: Date; min:
   let highV: number | null = null, secondV: number | null = null
   const todayLive = isReal && live.data
   if (todayLive) { highV = live.data!.tmax; secondV = live.data!.temp }
-  else if (entry) { highV = entry.tmax; secondV = entry.tmin }
+  else if (!isReal && entry) { highV = entry.tmax; secondV = entry.tmin }
   const secondLabel = todayLive ? 'Now' : 'Low'
 
   const brokeHigh = data.recordHigh.year === year

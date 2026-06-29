@@ -20,11 +20,11 @@ export default function PeriodScatter({ data, series, title }: {
   const p = PERIODS[idx]
   const shown = data.filter(d => d.year >= p.from && d.year <= p.to)
   return (
-    <div className="rounded-xl border border-border bg-surface p-4">
+    <div className="border border-border bg-surface p-4">
       <div className="mb-2 flex items-center justify-between gap-2">
         <p className="text-[11px] uppercase tracking-[0.09em] text-muted">{title}</p>
         <select value={idx} onChange={e => setIdx(Number(e.target.value))} aria-label="Period"
-          className="rounded-lg border border-border bg-surface-2 px-2 py-1 text-xs">
+          className="border border-border bg-surface-2 px-2 py-1 text-xs">
           {PERIODS.map((pp, i) => <option key={pp.label} value={i}>{pp.label}</option>)}
         </select>
       </div>

@@ -2,6 +2,7 @@ import { useMonth } from '../../data/useMonth'
 import { fmtTemp, fmtMonth, ordinal } from '../../lib/format'
 import { Loading, ErrorState } from '../../components/States'
 import CalendarTile from '../../components/CalendarTile'
+import BigTemp from '../../components/BigTemp'
 import RangeBar from '../../components/RangeBar'
 import StatCard from '../../components/StatCard'
 import WarmingStrip from '../../components/WarmingStrip'
@@ -23,22 +24,22 @@ export default function MonthView({ mm, currentYear }: { mm: string; currentYear
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-border bg-surface p-5">
+      <div className="border border-border bg-surface p-5">
         <div className="flex flex-wrap items-start gap-x-5 gap-y-3">
           <CalendarTile header={name.toUpperCase()} body={currentYear} />
           <div className="min-w-0 flex-1">
             {cur ? (
               <>
                 <p className="text-[11px] uppercase tracking-[0.09em] text-muted">{name} mean{cur.complete ? '' : ' (so far)'}</p>
-                <span className="text-[40px] font-extrabold leading-none">{fmtTemp(cur.mean)}</span>
-                {rank && cur.complete && <p className="mt-2 inline-block rounded-full bg-badge-bg px-3 py-1 text-xs font-semibold text-badge-fg">{ordinal(rank)} warmest {name} in {complete.length} years</p>}
+                <div><BigTemp v={cur.mean} className="text-[40px] text-fg" /></div>
+                {rank && cur.complete && <p className="mt-2 inline-block rounded-sm bg-badge-bg px-2.5 py-1 text-xs font-semibold text-badge-fg">{ordinal(rank)} warmest {name} in {complete.length} years</p>}
               </>
             ) : <p className="text-sm text-muted">No data for {name} {currentYear} yet.</p>}
           </div>
         </div>
 
         {cur && data.recordCold && data.recordWarm && (
-          <div className="mt-5">
+          <div className="mt-5 border-t border-border pt-4">
             <p className="mb-2 text-[11px] uppercase tracking-[0.09em] text-muted">Where {currentYear} sits</p>
             <RangeBar
               min={{ v: data.recordCold.v, label: `${data.recordCold.v}° coldest` }}

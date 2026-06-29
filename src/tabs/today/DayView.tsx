@@ -8,6 +8,7 @@ import { rankOf } from '../../lib/stats'
 import { decadeMean, previousRecordHigh, previousRecordLow, tempColor } from '../../lib/dayStats'
 import { Loading, ErrorState } from '../../components/States'
 import CalendarTile from '../../components/CalendarTile'
+import BigTemp from '../../components/BigTemp'
 import RangeBar from '../../components/RangeBar'
 import StatCard from '../../components/StatCard'
 import WarmingStrip from '../../components/WarmingStrip'
@@ -65,7 +66,7 @@ export default function DayView({ date, min, max, onChange }: { date: Date; min:
   return (
     <div className="space-y-4">
       {/* HERO */}
-      <div className="rounded-xl border border-border bg-surface p-5">
+      <div className="border border-border bg-surface p-5">
         <div className="flex flex-wrap items-start gap-x-5 gap-y-3">
           <CalendarTile header={fmtMonth(mm).toUpperCase()} body={date.getDate()} footer={fmtWeekday(date).toUpperCase()}
             onClick={openPicker} ariaLabel={`Change date — ${fullLabel}`} />
@@ -75,11 +76,11 @@ export default function DayView({ date, min, max, onChange }: { date: Date; min:
             ) : highV != null ? (
               <>
                 <p className="text-[11px] uppercase tracking-[0.09em] text-muted">{isReal ? "Today's high" : 'High'}</p>
-                <span className={`text-[40px] font-extrabold leading-none ${tempColor(highV, normal)}`}>{fmtTemp(highV)}</span>
+                <div><BigTemp v={highV} className={`text-[40px] ${tempColor(highV, normal)}`} /></div>
               </>
             ) : <p className="text-sm text-muted">No data for this date.</p>}
             {provisional && <p className="mt-1 text-[11px] text-muted"><span aria-hidden>· </span>Provisional — may be revised</p>}
-            {r && <p className="mt-2 inline-block rounded-full bg-badge-bg px-3 py-1 text-xs font-semibold text-badge-fg">{ordinal(r.rank)} warmest {dayLabel}{firstYear != null && ` since ${firstYear}`}</p>}
+            {r && <p className="mt-2 inline-block rounded-sm bg-badge-bg px-2.5 py-1 text-xs font-semibold text-badge-fg">{ordinal(r.rank)} warmest {dayLabel}{firstYear != null && ` since ${firstYear}`}</p>}
           </div>
           {secondV != null && (
             <div className="text-right">
@@ -98,7 +99,7 @@ export default function DayView({ date, min, max, onChange }: { date: Date; min:
 
         {/* WHERE TODAY SITS */}
         {highV != null && (
-          <div className="mt-5">
+          <div className="mt-5 border-t border-border pt-4">
             <p className="mb-2 text-[11px] uppercase tracking-[0.09em] text-muted">Where {isReal ? 'today' : 'it'} sits</p>
             <RangeBar
               min={{ v: data.recordLow.v, label: `${data.recordLow.v}° record low` }}

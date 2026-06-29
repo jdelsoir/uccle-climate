@@ -34,7 +34,7 @@ function renderDay(date: Date) { return render(<DayView date={date} min={MIN} ma
 test('today: HIGH + NOW + rank badge', async () => {
   vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
   renderDay(TODAY)
-  await waitFor(() => expect(screen.getByText('26.8 °C')).toBeInTheDocument())   // live today's high
+  await waitFor(() => expect(screen.getByText('26.8')).toBeInTheDocument())       // live today's high (BigTemp number)
   expect(screen.getByText("Today's high")).toBeInTheDocument()
   expect(screen.getByText('23.2°')).toBeInTheDocument()                           // NOW
   expect(screen.getByText('Now')).toBeInTheDocument()
@@ -51,7 +51,7 @@ test('opening the picker works (CalendarTile click does not throw)', async () =>
 test('past day: HIGH + LOW (no NOW)', async () => {
   vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
   renderDay(PAST)                                  // Y-2 row: high 25, low 14
-  await waitFor(() => expect(screen.getByText('25.0 °C')).toBeInTheDocument())   // that day's high
+  await waitFor(() => expect(screen.getByText('25.0')).toBeInTheDocument())      // that day's high (BigTemp number)
   expect(screen.getByText('Low', { selector: 'p' })).toBeInTheDocument()         // hero label (the chart legend's "Low" lives in a <span>)
   expect(screen.queryByText('Now')).not.toBeInTheDocument()
 })

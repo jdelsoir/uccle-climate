@@ -5,7 +5,7 @@ export default function CalendarTile({ header, body, footer, onClick, ariaLabel 
     <>
       <span aria-hidden className="absolute -top-1 left-[34%] z-10 h-3 w-1.5 -translate-x-1/2 rounded-full bg-muted" />
       <span aria-hidden className="absolute -top-1 left-[66%] z-10 h-3 w-1.5 -translate-x-1/2 rounded-full bg-muted" />
-      <span className="block overflow-hidden rounded-xl border border-border shadow-md">
+      <span className="block overflow-hidden border border-border shadow-md">
         <span className="block bg-cal-header py-1 text-center text-[11px] font-bold leading-none tracking-wide text-white">{header}</span>
         <span className="block bg-surface px-2 pt-2 pb-2">
           <span className="block text-center text-3xl font-extrabold leading-none text-fg">{body}</span>

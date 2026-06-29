@@ -52,11 +52,11 @@ export default function Today() {
         <h2 className="text-2xl font-extrabold tracking-tight">{HEADINGS[mode]}</h2>
         <div className="flex items-center gap-2">
           <button type="button" onClick={onToday} disabled={todayDisabled} aria-label="Go to today"
-            className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted transition-colors hover:text-fg disabled:opacity-40 disabled:hover:text-muted">Today</button>
+            className="border border-border px-3 py-1 text-xs font-medium text-muted transition-colors hover:text-fg disabled:opacity-40 disabled:hover:text-muted">Today</button>
           <button type="button" onClick={onPrev} disabled={prevDisabled} aria-label={`Previous ${NOUN[mode]}`}
-            className="grid h-9 w-9 place-items-center rounded-lg border border-border text-muted transition-colors hover:text-fg disabled:opacity-40"><ChevronLeft size={18} aria-hidden /></button>
+            className="grid h-9 w-9 place-items-center border border-border text-muted transition-colors hover:text-fg disabled:opacity-40"><ChevronLeft size={18} aria-hidden /></button>
           <button type="button" onClick={onNext} disabled={nextDisabled} aria-label={`Next ${NOUN[mode]}`}
-            className="grid h-9 w-9 place-items-center rounded-lg border border-border text-muted transition-colors hover:text-fg disabled:opacity-40"><ChevronRight size={18} aria-hidden /></button>
+            className="grid h-9 w-9 place-items-center border border-border text-muted transition-colors hover:text-fg disabled:opacity-40"><ChevronRight size={18} aria-hidden /></button>
         </div>
       </div>
 

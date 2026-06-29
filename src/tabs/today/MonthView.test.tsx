@@ -14,7 +14,7 @@ afterEach(() => vi.unstubAllGlobals())
 test('month: tile, mean, rank, stat cards, warming strip', async () => {
   vi.stubGlobal('fetch', vi.fn().mockImplementation(() => Promise.resolve({ ok: true, json: async () => month })))
   render(<MonthView mm="06" currentYear={2026} />)
-  await waitFor(() => expect(screen.getByText('18.4 °C')).toBeInTheDocument())   // June 2026 mean
+  await waitFor(() => expect(screen.getByText('18.4')).toBeInTheDocument())      // June 2026 mean (BigTemp number)
   expect(screen.getByText('JUNE')).toBeInTheDocument()                            // tile header
   expect(screen.getByText('2026')).toBeInTheDocument()                            // tile body
   expect(screen.getByText(/warmest June/)).toBeInTheDocument()                    // rank badge

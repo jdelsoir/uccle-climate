@@ -8,7 +8,7 @@ export default function StatCard({ label, value, sub, valueClass = 'text-fg', on
       {sub && <p className="text-xs text-muted">{sub}</p>}
     </>
   )
-  const cls = 'rounded-xl border border-border bg-surface p-4'
+  const cls = 'border border-border bg-surface p-4'
   if (onClick) return (
     <button type="button" onClick={onClick} className={`${cls} text-left transition-colors hover:border-warm`}>{body}</button>
   )

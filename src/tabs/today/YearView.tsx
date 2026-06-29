@@ -2,6 +2,7 @@ import { useSummary } from '../../data/useSummary'
 import { fmtTemp, ordinal } from '../../lib/format'
 import { Loading, ErrorState } from '../../components/States'
 import CalendarTile from '../../components/CalendarTile'
+import BigTemp from '../../components/BigTemp'
 import RangeBar from '../../components/RangeBar'
 import StatCard from '../../components/StatCard'
 import WarmingStrip from '../../components/WarmingStrip'
@@ -34,22 +35,22 @@ export default function YearView({ year }: { year: number }) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-border bg-surface p-5">
+      <div className="border border-border bg-surface p-5">
         <div className="flex flex-wrap items-start gap-x-5 gap-y-3">
           <CalendarTile header="YEAR" body={year} />
           <div className="min-w-0 flex-1">
             {a ? (
               <>
                 <p className="text-[11px] uppercase tracking-[0.09em] text-muted">Annual mean{a.incomplete ? ' (so far)' : ''}</p>
-                <span className="text-[40px] font-extrabold leading-none">{fmtTemp(a.mean)}</span>
-                {rank && !a.incomplete && <p className="mt-2 inline-block rounded-full bg-badge-bg px-3 py-1 text-xs font-semibold text-badge-fg">{ordinal(rank)} warmest year in {total} years</p>}
+                <div><BigTemp v={a.mean} className="text-[40px] text-fg" /></div>
+                {rank && !a.incomplete && <p className="mt-2 inline-block rounded-sm bg-badge-bg px-2.5 py-1 text-xs font-semibold text-badge-fg">{ordinal(rank)} warmest year in {total} years</p>}
               </>
             ) : <p className="text-sm text-muted">No data for {year}.</p>}
           </div>
         </div>
 
         {a && recordWarm && recordCold && (
-          <div className="mt-5">
+          <div className="mt-5 border-t border-border pt-4">
             <p className="mb-2 text-[11px] uppercase tracking-[0.09em] text-muted">Where {year} sits</p>
             <RangeBar
               min={{ v: recordCold.mean, label: `${recordCold.mean}° coldest` }}

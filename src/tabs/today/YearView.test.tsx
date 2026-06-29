@@ -28,7 +28,7 @@ afterEach(() => vi.unstubAllGlobals())
 test('year: tile, mean, rank, stat cards', async () => {
   vi.stubGlobal('fetch', vi.fn().mockImplementation(() => Promise.resolve({ ok: true, json: async () => summary })))
   render(<YearView year={2026} />)
-  await waitFor(() => expect(screen.getByText('11.8 °C')).toBeInTheDocument())  // 2026 annual mean
+  await waitFor(() => expect(screen.getByText('11.8')).toBeInTheDocument())  // 2026 annual mean
   expect(screen.getByText('YEAR')).toBeInTheDocument()
   expect(screen.getByText('2026')).toBeInTheDocument()
   expect(screen.getByText(/warmest year/)).toBeInTheDocument()
@@ -41,7 +41,7 @@ test('year: tile, mean, rank, stat cards', async () => {
 test('year incomplete: (so far) label shown, rank badge suppressed', async () => {
   vi.stubGlobal('fetch', vi.fn().mockImplementation(() => Promise.resolve({ ok: true, json: async () => summaryIncomplete })))
   render(<YearView year={2026} />)
-  await waitFor(() => expect(screen.getByText('11.8 °C')).toBeInTheDocument())
+  await waitFor(() => expect(screen.getByText('11.8')).toBeInTheDocument())
   expect(screen.getByText(/so far/i)).toBeInTheDocument()
   expect(screen.queryByText(/warmest year in/i)).not.toBeInTheDocument()
 })

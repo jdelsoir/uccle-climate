@@ -108,3 +108,13 @@ def test_build_emits_month_files(tmp_path):
     assert june["mm"] == "06"
     assert june["recordWarm"] == {"year": 2020, "v": 20.0}
     assert (tmp_path / "month" / "01.json").exists()  # all 12 emitted
+
+
+def test_build_emits_daily_files(tmp_path):
+    build(records=recs_for(2019, 365, 12.0), out_dir=str(tmp_path))
+    daily = json.loads((tmp_path / "daily" / "2019.json").read_text())
+    assert len(daily) == 365
+    byd = {d["mmdd"]: d for d in daily}
+    assert byd["0625"]["tmax"] == 17.0          # recs_for: tmax = tmean + 5
+    assert byd["0625"]["recHi"] is True          # only year present → holds every record
+    assert byd["0625"]["recLo"] is True

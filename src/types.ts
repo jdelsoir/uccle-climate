@@ -31,3 +31,5 @@ export interface MonthData {
   normal: number | null
   thenNow: { early: { from: number; to: number; mean: number | null }; recent: { from: number; to: number; mean: number | null } }
 }
+export interface DailyPoint { mmdd: string; tmax: number; tmin: number; provisional?: boolean; recHi?: boolean; recLo?: boolean }
+export type DailyYear = DailyPoint[]

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Flame, Snowflake } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useSummary } from '../data/useSummary'
 import { useTodayTemp } from '../data/useTodayTemp'
 import { Loading, ErrorState } from '../components/States'
@@ -23,47 +23,41 @@ export default function Records() {
 
   return (
     <section className="fade-in space-y-4">
-      <h2 className="text-2xl font-extrabold tracking-tight">Records</h2>
+      <div className="border border-border bg-surface p-5">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-2xl font-extrabold tracking-tight">Records</h2>
+          <div role="radiogroup" aria-label="Record type" className="inline-flex border border-border text-sm">
+            <button
+              type="button" role="radio" aria-checked={warm} onClick={() => setMode('warm')}
+              className={`px-3 py-1.5 font-semibold transition-colors ${warm ? 'bg-warm text-white' : 'text-muted hover:text-fg'}`}
+            >Warmest</button>
+            <button
+              type="button" role="radio" aria-checked={!warm} onClick={() => setMode('cold')}
+              className={`px-3 py-1.5 font-semibold transition-colors ${!warm ? 'bg-accent text-white' : 'text-muted hover:text-fg'}`}
+            >Coldest</button>
+          </div>
+        </div>
 
-      <div className="inline-flex rounded-lg border border-border bg-surface p-1 text-sm" role="radiogroup" aria-label="Record type">
-        <button
-          type="button"
-          role="radio"
-          aria-checked={warm}
-          onClick={() => setMode('warm')}
-          className={`flex items-center gap-1 rounded-md px-3 py-1.5 ${warm ? 'bg-warm/10 font-semibold text-warm' : 'text-muted'}`}
-        >
-          <Flame size={14} aria-hidden /> Warmest
-        </button>
-        <button
-          type="button"
-          role="radio"
-          aria-checked={!warm}
-          onClick={() => setMode('cold')}
-          className={`flex items-center gap-1 rounded-md px-3 py-1.5 ${!warm ? 'bg-accent/10 font-semibold text-accent' : 'text-muted'}`}
-        >
-          <Snowflake size={14} aria-hidden /> Coldest
-        </button>
+        <p className="mt-3 text-xs text-muted">
+          Top 10 {warm ? 'hottest days' : 'coldest days'} on record at Uccle (daily {warm ? 'maximum' : 'minimum'}; today included live).
+        </p>
+
+        <ol className="mt-2 border-t border-border divide-y divide-border">
+          {list.map((rec, i) => (
+            <li key={rec.date}>
+              <Link
+                to={`/today?d=${rec.date}`}
+                aria-label={`${fmtDate(rec.date)} — ${fmtTemp(rec.v)}, rank ${i + 1}. Open this day`}
+                className="flex items-center gap-3 py-3 transition-colors hover:bg-surface-2"
+              >
+                <span className="w-6 text-right text-sm font-bold text-muted">{i + 1}</span>
+                <span className="flex-1 text-sm">{fmtDate(rec.date)}{rec.date === today ? ' · today' : ''}</span>
+                <span className={`text-lg font-bold ${accent}`}>{rec.v.toFixed(1)}<span className="ml-0.5 text-xs">°C</span></span>
+              </Link>
+            </li>
+          ))}
+        </ol>
       </div>
-
-      <p className="text-xs text-muted">
-        Top 10 {warm ? 'hottest days' : 'coldest days'} on record at Uccle (daily {warm ? 'maximum' : 'minimum'}; today included live).
-      </p>
-
-      <ol className="space-y-2">
-        {list.map((rec, i) => (
-          <li
-            key={rec.date}
-            className={`flex items-center justify-between rounded-xl border px-4 py-3 ${rec.date === today ? 'border-warm bg-warm/5' : 'border-border bg-surface'}`}
-          >
-            <div className="flex items-center gap-3">
-              <span className="w-5 text-right text-sm font-bold text-muted">{i + 1}</span>
-              <span className="text-sm">{fmtDate(rec.date)}{rec.date === today ? ' · today' : ''}</span>
-            </div>
-            <span className={`text-lg font-bold ${accent}`}>{fmtTemp(rec.v)}</span>
-          </li>
-        ))}
-      </ol>
     </section>
   )
 }

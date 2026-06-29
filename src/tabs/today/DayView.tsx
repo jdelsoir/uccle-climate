@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { useThisDay } from '../../data/useThisDay'
 import { useTodayTemp } from '../../data/useTodayTemp'
 import { useDayNorm } from '../../data/useDayNorm'
@@ -14,9 +14,14 @@ import WarmingStrip from '../../components/WarmingStrip'
 import PeriodScatter from '../../components/PeriodScatter'
 import HeroShell from '../../components/HeroShell'
 import { heroState, deltaLine, bannerClass, toneText } from '../../lib/heroState'
+import { Share2 } from 'lucide-react'
+import { shareNode } from '../../lib/share'
+import { shareSentence, shareCaption } from '../../lib/shareText'
 
 export default function DayView({ date, min, max, onChange }: { date: Date; min: Date; max: Date; onChange: (d: Date) => void }) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const [capturing, setCapturing] = useState(false)
+  const busy = useRef(false)
   const mmdd = mmddOf(date)
   const mm = mmdd.slice(0, 2)
   const year = date.getFullYear()
@@ -65,6 +70,24 @@ export default function DayView({ date, min, max, onChange }: { date: Date; min:
     : state.key === 'record-cold' && prevLow ? `beat ${prevLow.v}° from ${prevLow.year}`
     : null
 
+  const sentence = shareSentence({
+    date, key: state.key, rank: r?.rank ?? null, firstYear,
+    prevRecord: state.key === 'record-cold' ? prevLow : prevHigh, isToday: isReal,
+  })
+  const handleShare = async () => {
+    if (busy.current) return
+    busy.current = true
+    setCapturing(true)
+    try {
+      await new Promise<void>(res => requestAnimationFrame(() => requestAnimationFrame(() => res())))
+      const node = document.getElementById('day-hero-capture')
+      if (node) await shareNode(node, 'uccle-day.png', { text: shareCaption(sentence) })
+    } finally {
+      setCapturing(false)
+      busy.current = false
+    }
+  }
+
   // viewed-year-relative warming windows (matches mockup: 2026 → 1915–1925 vs 2015–2025)
   const recentFrom = year - 11, recentTo = year - 1, thenFrom = year - 111, thenTo = year - 101
   const recentMean = decadeMean(data.series, recentFrom, recentTo)
@@ -81,38 +104,55 @@ export default function DayView({ date, min, max, onChange }: { date: Date; min:
 
   return (
     <div className="space-y-4">
-      {/* HERO */}
-      <HeroShell tone={state.tone} intensity={state.intensity}>
-        <div className="flex flex-wrap items-start gap-x-5 gap-y-3">
-          <CalendarTile header={fmtMonth(mm).toUpperCase()} body={date.getDate()} footer={`${fmtWeekday(date).slice(0, 3).toUpperCase()} · ${year}`}
-            onClick={openPicker} ariaLabel={`Change date — ${fullLabel}`} />
-          <div className="min-w-0 flex-1">
-            {isReal && !live.data ? (
-              <p className="text-sm text-muted">{live.error ? 'Live temperature unavailable.' : 'Fetching today…'}</p>
-            ) : highV != null ? (
-              <>
-                <p className="text-[11px] uppercase tracking-[0.09em] text-muted">{state.word}</p>
-                <div><BigTemp v={highV} className={`text-[40px] ${toneText(state.tone)}`} /></div>
-                {dl && <p className="mt-1 text-sm text-muted">{dl}</p>}
-                {provisional && <p className="mt-1 text-[11px] text-muted"><span aria-hidden>· </span>Provisional — may be revised</p>}
-              </>
-            ) : <p className="text-sm text-muted">No data for this date.</p>}
+      {/* HERO (capture target) */}
+      <div id="day-hero-capture">
+        <HeroShell tone={state.tone} intensity={state.intensity}>
+          <div className="flex flex-wrap items-start gap-x-5 gap-y-3">
+            <CalendarTile header={fmtMonth(mm).toUpperCase()} body={date.getDate()} footer={`${fmtWeekday(date).slice(0, 3).toUpperCase()} · ${year}`}
+              onClick={openPicker} ariaLabel={`Change date — ${fullLabel}`} />
+            <div className="min-w-0 flex-1">
+              {isReal && !live.data ? (
+                <p className="text-sm text-muted">{live.error ? 'Live temperature unavailable.' : 'Fetching today…'}</p>
+              ) : highV != null ? (
+                <>
+                  <p className="text-[11px] uppercase tracking-[0.09em] text-muted">{state.word}</p>
+                  <div><BigTemp v={highV} className={`text-[40px] ${toneText(state.tone)}`} /></div>
+                  {dl && <p className="mt-1 text-sm text-muted">{dl}</p>}
+                  {provisional && <p className="mt-1 text-[11px] text-muted"><span aria-hidden>· </span>Provisional — may be revised</p>}
+                </>
+              ) : <p className="text-sm text-muted">No data for this date.</p>}
+            </div>
+            {secondV != null && (
+              <div className="text-right">
+                <p className="text-[11px] uppercase tracking-[0.09em] text-muted">{secondLabel}</p>
+                <span className="text-2xl font-bold">{todayLive ? `${secondV.toFixed(1)}°` : fmtTemp(secondV)}</span>
+              </div>
+            )}
           </div>
-          {secondV != null && (
-            <div className="text-right">
-              <p className="text-[11px] uppercase tracking-[0.09em] text-muted">{secondLabel}</p>
-              <span className="text-2xl font-bold">{todayLive ? `${secondV.toFixed(1)}°` : fmtTemp(secondV)}</span>
+
+          {highV != null && (
+            <div className="mt-3">
+              <span className={`inline-block px-2.5 py-1 text-xs font-semibold ${bannerClass(state.key)}`}>{banner}</span>
+              {bannerSub && <p className="mt-1 text-[11px] text-muted">{bannerSub}</p>}
             </div>
           )}
-        </div>
-
-        {highV != null && (
-          <div className="mt-3">
-            <span className={`inline-block px-2.5 py-1 text-xs font-semibold ${bannerClass(state.key)}`}>{banner}</span>
-            {bannerSub && <p className="mt-1 text-[11px] text-muted">{bannerSub}</p>}
+        </HeroShell>
+        {capturing && highV != null && (
+          <div className="border border-t-0 border-border bg-surface px-5 py-3 text-[11px] text-muted">
+            <p className="text-fg">{sentence}</p>
+            <p className="mt-0.5">Uccle, Brussels · jdelsoir.github.io/uccle-climate</p>
           </div>
         )}
-      </HeroShell>
+      </div>
+
+      {highV != null && (
+        <div className="flex justify-end">
+          <button type="button" aria-label="Share this day" disabled={capturing} onClick={handleShare}
+            className="inline-flex items-center gap-1.5 px-2 py-1 text-xs text-muted transition-colors hover:text-fg disabled:opacity-40">
+            <Share2 size={14} aria-hidden /> Share
+          </button>
+        </div>
+      )}
 
       {/* WHERE TODAY SITS — own card (kept out of the hero to avoid the glyph) */}
       {highV != null && (

@@ -5,6 +5,8 @@ import { todayMMDD } from '../../lib/format'
 
 vi.mock('recharts', async (o) => { const a = await o<typeof import('recharts')>()
   return { ...a, ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div style={{ width: 800, height: 300 }}>{children}</div> } })
+vi.mock('../../lib/share', () => ({ shareNode: vi.fn().mockResolvedValue(undefined) }))
+import { shareNode } from '../../lib/share'
 
 const NOW = new Date()
 const Y = NOW.getFullYear()
@@ -157,4 +159,15 @@ it('shows the CLOSE TO AVERAGE state for a typical day', async () => {
   expect(await screen.findByText(/close to average/i)).toBeTruthy()
   expect(screen.getByText('+0.7° vs the average')).toBeTruthy()
   expect(screen.getByText(/A typical/i)).toBeTruthy()
+})
+
+test('discreet Share button shares the day with a caption', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
+  renderDay(TODAY)
+  const btn = await screen.findByRole('button', { name: /share this day/i })
+  fireEvent.click(btn)
+  await waitFor(() => expect(shareNode).toHaveBeenCalled())
+  const call = (shareNode as unknown as { mock: { calls: unknown[][] } }).mock.calls[0]
+  expect(call[1]).toBe('uccle-day.png')
+  expect((call[2] as { text: string }).text).toMatch(/is forecast to be/) // today → tentative voice
 })

@@ -10,9 +10,10 @@ export default function RangeBar({ min, max, markers, summary }: {
 }) {
   return (
     <div role="img" aria-label={summary} className="select-none">
-      <div className="relative h-5">
+      {/* Marker labels staggered across two rows so close-together markers don't overlap. */}
+      <div className="relative h-9">
         {markers.map((m, i) => (
-          <span key={i} aria-hidden style={{ left: `${rangePct(m.v, min.v, max.v)}%` }}
+          <span key={i} aria-hidden style={{ left: `${rangePct(m.v, min.v, max.v)}%`, top: i % 2 ? '1.15rem' : 0 }}
             className="absolute -translate-x-1/2 whitespace-nowrap text-[11px] text-muted">{m.label}</span>
         ))}
       </div>

@@ -81,7 +81,7 @@ export default function DayView({ date, min, max, onChange }: { date: Date; min:
     try {
       await new Promise<void>(res => requestAnimationFrame(() => requestAnimationFrame(() => res())))
       const node = document.getElementById('day-hero-capture')
-      if (node) await shareNode(node, 'uccle-day.png', { text: shareCaption(sentence) })
+      if (node) await shareNode(node, 'uccle-day.png', { text: shareCaption(sentence, date) })
     } finally {
       setCapturing(false)
       busy.current = false

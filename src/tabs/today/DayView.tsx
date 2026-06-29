@@ -84,7 +84,7 @@ export default function DayView({ date, min, max, onChange }: { date: Date; min:
       {/* HERO */}
       <HeroShell tone={state.tone} intensity={state.intensity}>
         <div className="flex flex-wrap items-start gap-x-5 gap-y-3">
-          <CalendarTile header={fmtMonth(mm).toUpperCase()} body={date.getDate()} footer={fmtWeekday(date).toUpperCase()}
+          <CalendarTile header={fmtMonth(mm).toUpperCase()} body={date.getDate()} footer={`${fmtWeekday(date).slice(0, 3).toUpperCase()} · ${year}`}
             onClick={openPicker} ariaLabel={`Change date — ${fullLabel}`} />
           <div className="min-w-0 flex-1">
             {isReal && !live.data ? (

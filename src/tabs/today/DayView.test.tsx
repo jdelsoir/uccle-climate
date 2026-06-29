@@ -41,6 +41,13 @@ test('today: HIGH + NOW + rank badge', async () => {
   expect(screen.getByText(/warmest/i)).toBeInTheDocument()                        // rank badge present
 })
 
+test('day tile footer shows weekday + year (disambiguates past years)', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
+  renderDay(PAST)
+  await waitFor(() => expect(screen.getByText('25.0')).toBeInTheDocument())   // past day loaded
+  expect(screen.getByText(new RegExp(`· ${Y - 2}`))).toBeInTheDocument()      // tile footer carries the year
+})
+
 test('opening the picker works (CalendarTile click does not throw)', async () => {
   vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
   const { container } = renderDay(TODAY)

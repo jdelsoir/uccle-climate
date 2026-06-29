@@ -1,0 +1,21 @@
+name: Keepalive
+# Scheduled workflows are auto-disabled after 60 days with no repository COMMIT activity.
+# The daily refresh deploys via the Pages artifact and never commits, so it does not reset
+# that timer. This monthly heartbeat commit keeps all scheduled workflows enabled unattended.
+on:
+  schedule: [{ cron: '0 6 1 * *' }]   # 1st of each month 06:00 UTC (~30d << 60d window)
+  workflow_dispatch:
+permissions: { contents: write }
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: |
+          date -u +"%Y-%m-%dT%H:%M:%SZ" > .github/keepalive
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/keepalive
+          # GITHUB_TOKEN pushes don't trigger workflows (no deploy loop); [skip ci] is belt-and-suspenders.
+          git commit -m "chore: keepalive [skip ci]" || echo "nothing to commit"
+          git push

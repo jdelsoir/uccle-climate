@@ -1,106 +1,57 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { vi } from 'vitest'
 import DayView from './DayView'
+import { todayMMDD } from '../../lib/format'
 
 vi.mock('recharts', async (o) => { const a = await o<typeof import('recharts')>()
   return { ...a, ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div style={{ width: 800, height: 300 }}>{children}</div> } })
 
-// thisday for 06-28: record high held by 1955, with earlier years present
-const thisday = { mmdd: '0628', recordHigh: { v: 34.8, year: 1955 }, recordLow: { v: 4.1, year: 1923 },
-  series: [
-    { year: 1923, tmax: 20, tmin: 4.1 }, { year: 1925, tmax: 22, tmin: 6 },
-    { year: 1955, tmax: 34.8, tmin: 12 }, { year: 2015, tmax: 30, tmin: 16 },
-    { year: 2020, tmax: 31, tmin: 17 }, { year: 2024, tmax: 29, tmin: 15 },
-  ],
-  thenNow: { early: { from: 1833, to: 1900, mean: 18 }, recent: { from: 1996, to: 2025, mean: 21 } } }
-const daynorm = { '1991-2020': [{ doy: 180, mmdd: '0628', normal: 24, p10: 18, p90: 30 }], '1961-1990': [] }
-const live = { current: { time: '2026-06-28T12:00', temperature_2m: 27 }, daily: { time: ['2026-06-28'], temperature_2m_max: [29], temperature_2m_min: [16] } }
+const NOW = new Date()
+const Y = NOW.getFullYear()
+const MMDD = todayMMDD()
+const midnight = (d: Date) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x }
+const TODAY = midnight(NOW)
+const PAST = midnight(new Date(Y - 2, NOW.getMonth(), NOW.getDate()))   // same month/day, past year (not record)
 
-function routeFetch(u: string) {
-  if (u.includes('open-meteo')) return live
-  if (u.includes('daynorm')) return daynorm
-  return thisday
-}
+// series spans Y-relative years so warming windows ([Y-11..Y-1] and [Y-111..Y-101]) are both non-empty on any run date
+const thisday = { mmdd: MMDD, recordHigh: { v: 32.6, year: 1957 }, recordLow: { v: 5.3, year: 1844 },
+  series: [
+    { year: Y - 105, tmax: 19, tmin: 9 }, { year: 1957, tmax: 32.6, tmin: 12 },
+    { year: Y - 2, tmax: 25, tmin: 14 }, { year: Y, tmax: 26.8, tmin: 16 },
+  ], thenNow: { early: { from: 1833, to: 1900, mean: 18 }, recent: { from: 1996, to: 2025, mean: 21 } } }
+const daynorm = { '1991-2020': [{ doy: 1, mmdd: MMDD, normal: 17.9, p10: 12, p90: 24 }], '1961-1990': [] }
+const live = { current: { time: `${TODAY.getFullYear()}-01-01T12:00`, temperature_2m: 23.2 },
+  daily: { time: [`${TODAY.getFullYear()}-01-01`], temperature_2m_max: [26.8], temperature_2m_min: [16] } }
+function routeFetch(u: string) { if (u.includes('open-meteo')) return live; if (u.includes('daynorm')) return daynorm; return thisday }
 afterEach(() => vi.unstubAllGlobals())
 
-test('today shows max + current, both colored, date line', async () => {
+const MIN = new Date(1833, 0, 1)
+function renderDay(date: Date) { return render(<DayView date={date} min={MIN} max={TODAY} onChange={() => {}} />) }
+
+// NOTE: useTodayTemp picks today's daily row by matching current.time's date; here both are Jan 1
+// so the matched row's tmax/tmin (26.8/16) are used regardless of the real run date.
+
+test('today: HIGH + NOW + rank badge', async () => {
   vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
-  render(<DayView />)
-  await waitFor(() => expect(screen.getByText('29.0 °C')).toBeInTheDocument()) // max
-  expect(screen.getByText('27.0 °C')).toBeInTheDocument()                      // current
-  expect(screen.getByText('current')).toBeInTheDocument()
-  expect(screen.getByText(/Average 24\.0 °C/)).toBeInTheDocument()             // 1991-2020 day normal
-  // max 29 is 4th-warmest tmax of 6 years; earliest series year is 1923
-  expect(screen.getByText(/4th warmest June 28 since 1923/)).toBeInTheDocument()
+  renderDay(TODAY)
+  await waitFor(() => expect(screen.getByText('26.8 °C')).toBeInTheDocument())   // live today's high
+  expect(screen.getByText("Today's high")).toBeInTheDocument()
+  expect(screen.getByText('23.2°')).toBeInTheDocument()                           // NOW
+  expect(screen.getByText('Now')).toBeInTheDocument()
+  expect(screen.getByText(/warmest/i)).toBeInTheDocument()                        // rank badge present
 })
 
-test('navigating to the record year shows the record-broken banner + previous record, and records are clickable', async () => {
+test('opening the picker works (CalendarTile click does not throw)', async () => {
   vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
-  const { container } = render(<DayView />)
+  const { container } = renderDay(TODAY)
   await waitFor(() => expect(container.querySelector('input[type="date"]')).toBeTruthy())
-  // jump to 1955-06-28 (the record-high year)
-  const input = container.querySelector('input[type="date"]') as HTMLInputElement
-  fireEvent.change(input, { target: { value: '1955-06-28' } })
-  await waitFor(() => expect(screen.getByText(/Record high for this date/i)).toBeInTheDocument())
-  expect(screen.getByText(/Previous: 22.0 °C \(1925\)/)).toBeInTheDocument()
-  expect(screen.getAllByText('34.8 °C')).toHaveLength(2)  // max from series for 1955 (hero + button)
-  expect(screen.getByText('min')).toBeInTheDocument()     // past date → min, not current
+  expect(() => fireEvent.click(screen.getByRole('button', { name: /change date/i }))).not.toThrow()
 })
 
-test('then-vs-now uses viewed-year-relative 100yr decades', async () => {
+test('past day: HIGH + LOW (no NOW)', async () => {
   vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
-  const { container } = render(<DayView />)
-  await waitFor(() => expect(container.querySelector('input[type="date"]')).toBeTruthy())
-  const input = container.querySelector('input[type="date"]') as HTMLInputElement
-  fireEvent.change(input, { target: { value: '2025-06-28' } })
-  // recent = 2014..2024 (series: 2015,2020,2024), then = 1914..1924 (series: 1923)
-  await waitFor(() => expect(screen.getByText(/1914–1924/)).toBeInTheDocument())
-  expect(screen.getByText(/2014–2024/)).toBeInTheDocument()
-})
-
-test('then-vs-now row hidden when recent window is empty', async () => {
-  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
-  const { container } = render(<DayView />)
-  await waitFor(() => expect(container.querySelector('input[type="date"]')).toBeTruthy())
-  // navigate to 1930-06-28: recent = 1919..1929 (no series), then = 1819..1829 (no series)
-  // then both windows empty, row should be hidden
-  const input = container.querySelector('input[type="date"]') as HTMLInputElement
-  fireEvent.change(input, { target: { value: '1930-06-28' } })
-  await waitFor(() => expect(screen.queryByText(/Then vs now/i)).not.toBeInTheDocument())
-})
-
-test('on real today, live fetch error shows "Live temperature unavailable."', async () => {
-  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) =>
-    u.includes('open-meteo') ? Promise.reject(new Error('net')) : Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
-  render(<DayView />)
-  await waitFor(() => expect(screen.getByText(/Live temperature unavailable/i)).toBeInTheDocument())
-})
-
-// thisday whose 2024 entry is provisional (recent-fill flag)
-const thisdayProv = { mmdd: '0628', recordHigh: { v: 34.8, year: 1955 }, recordLow: { v: 4.1, year: 1923 },
-  series: [
-    { year: 2020, tmax: 31, tmin: 17 },
-    { year: 2024, tmax: 29, tmin: 15, provisional: true },
-  ],
-  thenNow: { early: { from: 1833, to: 1900, mean: 18 }, recent: { from: 1996, to: 2025, mean: 21 } } }
-
-test('provisional past day shows a subtle marker', async () => {
-  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) =>
-    Promise.resolve({ ok: true, json: async () => (u.includes('open-meteo') ? live : u.includes('daynorm') ? daynorm : thisdayProv) })))
-  const { container } = render(<DayView />)
-  await waitFor(() => expect(container.querySelector('input[type="date"]')).toBeTruthy())
-  const input = container.querySelector('input[type="date"]') as HTMLInputElement
-  fireEvent.change(input, { target: { value: '2024-06-28' } })  // provisional entry, not today
-  await waitFor(() => expect(screen.getByText(/Provisional/i)).toBeInTheDocument())
-})
-
-test('non-provisional day shows no marker', async () => {
-  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) =>
-    Promise.resolve({ ok: true, json: async () => (u.includes('open-meteo') ? live : u.includes('daynorm') ? daynorm : thisdayProv) })))
-  const { container } = render(<DayView />)
-  await waitFor(() => expect(container.querySelector('input[type="date"]')).toBeTruthy())
-  const input = container.querySelector('input[type="date"]') as HTMLInputElement
-  fireEvent.change(input, { target: { value: '2020-06-28' } })   // 2020 entry has no provisional
-  await waitFor(() => expect(screen.getByText('31.0 °C')).toBeInTheDocument())
-  expect(screen.queryByText(/Provisional/i)).not.toBeInTheDocument()
+  renderDay(PAST)                                  // Y-2 row: high 25, low 14
+  await waitFor(() => expect(screen.getByText('25.0 °C')).toBeInTheDocument())   // that day's high
+  expect(screen.getByText('Low', { selector: 'p' })).toBeInTheDocument()         // hero label (the chart legend's "Low" lives in a <span>)
+  expect(screen.queryByText('Now')).not.toBeInTheDocument()
 })

@@ -7,6 +7,8 @@ import RangeBar from '../../components/RangeBar'
 import StatCard from '../../components/StatCard'
 import WarmingStrip from '../../components/WarmingStrip'
 import PeriodScatter from '../../components/PeriodScatter'
+import HeroShell from '../../components/HeroShell'
+import { heroState, deltaLine, bannerClass, toneText } from '../../lib/heroState'
 
 type Annual = { year: number; mean: number; incomplete: boolean }
 function yearWindowMean(annual: Annual[], from: number, to: number): number | null {
@@ -29,40 +31,62 @@ export default function YearView({ year }: { year: number }) {
   const delta = a && normal != null ? Math.round((a.mean - normal) * 10) / 10 : null
   const deltaWord = delta == null ? '' : delta > 0 ? 'warmer than normal' : delta < 0 ? 'cooler than normal' : 'at normal'
 
+  const yComplete = !!a && !a.incomplete
+  const state = heroState({
+    value: a ? a.mean : null,
+    normal,
+    brokeHigh: yComplete && recordWarm?.year === year,
+    brokeLow: yComplete && recordCold?.year === year,
+  })
+  const dl = deltaLine(state)
+  const banner = !a ? null
+    : !yComplete ? 'This year so far'
+    : state.key === 'record-hot' ? 'Warmest year on record'
+    : state.key === 'record-cold' ? 'Coldest year on record'
+    : state.key === 'above' && rank ? `${ordinal(rank)} warmest year in ${total} years`
+    : state.key === 'below' ? 'Cooler than usual'
+    : 'A typical year'
+  const bannerKey = yComplete ? state.key : 'close'
+
   const recentFrom = year - 11, recentTo = year - 1, thenFrom = year - 111, thenTo = year - 101
   const recentMean = yearWindowMean(summary.annual, recentFrom, recentTo)
   const thenMean = yearWindowMean(summary.annual, thenFrom, thenTo)
 
   return (
     <div className="space-y-4">
-      <div className="border border-border bg-surface p-5">
+      <HeroShell tone={state.tone} intensity={state.intensity}>
         <div className="flex flex-wrap items-start gap-x-5 gap-y-3">
           <CalendarTile header="YEAR" body={year} />
           <div className="min-w-0 flex-1">
             {a ? (
               <>
-                <p className="text-[11px] uppercase tracking-[0.09em] text-muted">Annual mean{a.incomplete ? ' (so far)' : ''}</p>
-                <div><BigTemp v={a.mean} className="text-[40px] text-fg" /></div>
-                {rank && !a.incomplete && <p className="mt-2 inline-block rounded-sm bg-badge-bg px-2.5 py-1 text-xs font-semibold text-badge-fg">{ordinal(rank)} warmest year in {total} years</p>}
+                <p className="text-[11px] uppercase tracking-[0.09em] text-muted">{state.word}</p>
+                <div><BigTemp v={a.mean} className={`text-[40px] ${toneText(state.tone)}`} /></div>
+                {dl && <p className="mt-1 text-sm text-muted">{dl}</p>}
               </>
-            ) : <p className="text-sm text-muted">No data for {year}.</p>}
+            ) : <p className="text-sm text-muted">No data for {year} yet.</p>}
           </div>
         </div>
-
-        {a && recordWarm && recordCold && (
-          <div className="mt-5 border-t border-border pt-4">
-            <p className="mb-2 text-[11px] uppercase tracking-[0.09em] text-muted">Where {year} sits</p>
-            <RangeBar
-              min={{ v: recordCold.mean, label: `${recordCold.mean}° coldest` }}
-              max={{ v: recordWarm.mean, label: `${recordWarm.mean}° warmest` }}
-              markers={[
-                ...(normal != null ? [{ v: normal, label: `normal ${normal}°`, kind: 'tick' as const }] : []),
-                { v: a.mean, label: `${year} ${a.mean}°`, kind: 'dot' as const },
-              ]}
-              summary={`${year} annual mean ${a.mean}°, normal ${normal ?? '—'}°, between ${recordCold.mean}° coldest and ${recordWarm.mean}° warmest year`} />
+        {banner && (
+          <div className="mt-3">
+            <span className={`inline-block px-2.5 py-1 text-xs font-semibold ${bannerClass(bannerKey)}`}>{banner}</span>
           </div>
         )}
-      </div>
+      </HeroShell>
+
+      {a && recordWarm && recordCold && (
+        <div className="border border-border bg-surface p-5">
+          <p className="mb-2 text-[11px] uppercase tracking-[0.09em] text-muted">Where {year} sits</p>
+          <RangeBar
+            min={{ v: recordCold.mean, label: `${recordCold.mean}° coldest` }}
+            max={{ v: recordWarm.mean, label: `${recordWarm.mean}° warmest` }}
+            markers={[
+              ...(normal != null ? [{ v: normal, label: `normal ${normal}°`, kind: 'tick' as const }] : []),
+              { v: a.mean, label: `${year} ${a.mean}°`, kind: 'dot' as const },
+            ]}
+            summary={`${year} annual mean ${a.mean}°, normal ${normal ?? '—'}°, between ${recordCold.mean}° coldest and ${recordWarm.mean}° warmest year`} />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {normal != null && <StatCard label="Average" value={fmtTemp(normal)} sub="1991–2020 normal" />}

@@ -35,7 +35,7 @@ test('today: HIGH + NOW + rank badge', async () => {
   vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
   renderDay(TODAY)
   await waitFor(() => expect(screen.getByText('26.8')).toBeInTheDocument())       // live today's high (BigTemp number)
-  expect(screen.getByText("Today's high")).toBeInTheDocument()
+  expect(screen.getByText(/above average/i)).toBeInTheDocument()                  // state.word eyebrow (replaces "Today's high")
   expect(screen.getByText('23.2°')).toBeInTheDocument()                           // NOW
   expect(screen.getByText('Now')).toBeInTheDocument()
   expect(screen.getByText(/warmest/i)).toBeInTheDocument()                        // rank badge present
@@ -79,4 +79,75 @@ test('today: live fetch error shows "Live temperature unavailable."', async () =
   renderDay(TODAY)
   await waitFor(() => expect(screen.getByText('Live temperature unavailable.')).toBeInTheDocument())
   expect(screen.queryByText(/warmest/i)).not.toBeInTheDocument()
+})
+
+// ── Hero-state helpers ───────────────────────────────────────────────────────
+
+const PAST2 = midnight(new Date(Y - 2, NOW.getMonth(), NOW.getDate()))
+
+// Build a series with 25 entries above tmax (rank=26) and firstYear=1833
+function makeWarmSeries(tmax: number, tmin: number): Array<{ year: number; tmax: number; tmin: number }> {
+  const above = Array.from({ length: 25 }, (_, i) => ({ year: 1833 + i, tmax: tmax + 10, tmin: tmin }))
+  return [...above, { year: Y - 2, tmax, tmin }]
+}
+
+function renderWarmPastDay({ tmax, tmin, normal, firstYear: _fy }: { tmax: number; tmin: number; normal: number; rank: number; firstYear: number }) {
+  const series = makeWarmSeries(tmax, tmin)
+  const fixture = {
+    mmdd: MMDD,
+    recordHigh: { v: tmax + 15, year: 1890 },
+    recordLow: { v: 3, year: 1900 },
+    series,
+    thenNow: { early: { from: 1833, to: 1900, mean: normal }, recent: { from: 1996, to: 2025, mean: normal + 1 } },
+  }
+  const customDaynorm = { '1991-2020': [{ doy: 1, mmdd: MMDD, normal, p10: normal - 5, p90: normal + 5 }], '1961-1990': [] }
+  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => {
+    if (u.includes('open-meteo')) return Promise.reject(new Error('not used'))
+    if (u.includes('daynorm')) return Promise.resolve({ ok: true, json: async () => customDaynorm })
+    return Promise.resolve({ ok: true, json: async () => fixture })
+  }))
+  render(<DayView date={PAST2} min={MIN} max={TODAY} onChange={() => {}} />)
+}
+
+function renderRecordHighDay({ tmax, normal, prevHigh, firstYear: _fy }: { tmax: number; normal: number; prevHigh: { v: number; year: number }; firstYear: number }) {
+  const series = [
+    { year: 1833, tmax: normal + 1, tmin: normal - 7 },
+    { year: prevHigh.year, tmax: prevHigh.v, tmin: normal - 7 },
+    { year: Y - 2, tmax, tmin: normal - 6 },
+  ]
+  const fixture = {
+    mmdd: MMDD,
+    recordHigh: { v: tmax, year: Y - 2 },
+    recordLow: { v: 3, year: 1900 },
+    series,
+    thenNow: { early: { from: 1833, to: 1900, mean: normal }, recent: { from: 1996, to: 2025, mean: normal + 1 } },
+  }
+  const customDaynorm = { '1991-2020': [{ doy: 1, mmdd: MMDD, normal, p10: normal - 5, p90: normal + 5 }], '1961-1990': [] }
+  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => {
+    if (u.includes('open-meteo')) return Promise.reject(new Error('not used'))
+    if (u.includes('daynorm')) return Promise.resolve({ ok: true, json: async () => customDaynorm })
+    return Promise.resolve({ ok: true, json: async () => fixture })
+  }))
+  render(<DayView date={PAST2} min={MIN} max={TODAY} onChange={() => {}} />)
+}
+
+it('shows the ABOVE AVERAGE state word, delta line and rank banner for a warm past day', async () => {
+  renderWarmPastDay({ tmax: 26.9, tmin: 14, normal: 18, rank: 26, firstYear: 1833 })
+  expect(await screen.findByText(/above average/i)).toBeTruthy()
+  expect(screen.getByText('+8.9° above the 1991–2020 average')).toBeTruthy()
+  expect(screen.getByText(/26th warmest .* since 1833/i)).toBeTruthy()
+})
+
+it('shows the record-hot banner with a prev-record subline when the viewed year holds the record high', async () => {
+  renderRecordHighDay({ tmax: 33.1, normal: 18, prevHigh: { v: 32.9, year: 1976 }, firstYear: 1833 })
+  expect(await screen.findByText(/record hot broken/i)).toBeTruthy()
+  expect(screen.getByText(/New record · hottest .* since 1833/i)).toBeTruthy()
+  expect(screen.getByText('beat 32.9° from 1976')).toBeTruthy()
+})
+
+it('shows the CLOSE TO AVERAGE state for a typical day', async () => {
+  renderWarmPastDay({ tmax: 18.7, tmin: 12, normal: 18, rank: 80, firstYear: 1833 })
+  expect(await screen.findByText(/close to average/i)).toBeTruthy()
+  expect(screen.getByText('+0.7° vs the average')).toBeTruthy()
+  expect(screen.getByText(/A typical/i)).toBeTruthy()
 })

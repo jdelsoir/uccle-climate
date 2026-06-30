@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import MonthView from './MonthView'
 
 vi.mock('recharts', async (o) => { const a = await o<typeof import('recharts')>()
@@ -39,11 +39,25 @@ it('renders the summary line and the day-by-day heatmap', async () => {
     'daynorm.json': daynormData,
     'daily/2019.json': dailyData,
   })
-  render(<MonthView year={2019} mm="06" onPickDay={vi.fn()} />)
+  render(<MonthView year={2019} mm="06" onPickDay={vi.fn()} onPickMonth={vi.fn()} />)
   // heatmap grid present
   expect(await screen.findByRole('grid', { name: /June 2019 daily highs/i })).toBeInTheDocument()
   // summary line present (1 of 2 days ran warm — 0619 is +17 over normal; 0620 is +1 → neutral)
   expect(await screen.findByText(/1 of 2 days ran warm, 0 cool/)).toBeInTheDocument()
+})
+
+it('opens a month picker from the calendar tile and reports the chosen month-year', async () => {
+  const onPickMonth = vi.fn()
+  stubFetch({ 'month/06.json': monthData, 'daynorm.json': daynormData, 'daily/2019.json': dailyData })
+  const { container } = render(<MonthView year={2019} mm="06" onPickDay={vi.fn()} onPickMonth={onPickMonth} />)
+  // calendar tile is an interactive button labelled for changing the month
+  expect(await screen.findByRole('button', { name: /change month/i })).toBeInTheDocument()
+  // the hidden month input drives the callback
+  const input = container.querySelector('input[type="month"]') as HTMLInputElement
+  expect(input).toBeTruthy()
+  expect(input.value).toBe('2019-06')
+  fireEvent.change(input, { target: { value: '2015-03' } })
+  expect(onPickMonth).toHaveBeenCalledWith(2015, 3)
 })
 
 describe('existing MonthView behaviour', () => {
@@ -80,7 +94,7 @@ describe('existing MonthView behaviour', () => {
       'daynorm.json': { '1991-2020': [], '1961-1990': [] },
       'daily/2019.json': [],
     })
-    render(<MonthView mm="06" year={cur.year} onPickDay={vi.fn()} />)
+    render(<MonthView mm="06" year={cur.year} onPickDay={vi.fn()} onPickMonth={vi.fn()} />)
   }
 
   it('month: tile, mean, rank, stat cards, warming strip', async () => {
@@ -89,7 +103,7 @@ describe('existing MonthView behaviour', () => {
       'daynorm.json': { '1991-2020': [], '1961-1990': [] },
       'daily/2026.json': [],
     })
-    render(<MonthView mm="06" year={2026} onPickDay={vi.fn()} />)
+    render(<MonthView mm="06" year={2026} onPickDay={vi.fn()} onPickMonth={vi.fn()} />)
     await waitFor(() => expect(screen.getByText('18.4')).toBeInTheDocument())
     expect(screen.getByText('JUNE')).toBeInTheDocument()
     expect(screen.getByText('2026')).toBeInTheDocument()

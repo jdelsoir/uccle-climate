@@ -27,3 +27,9 @@ export function topWarmest(days: DailyPoint[], n = 5): DailyPoint[] {
 export function topColdest(days: DailyPoint[], n = 5): DailyPoint[] {
   return [...days].sort((a, b) => a.tmin - b.tmin).slice(0, n)
 }
+
+export function windowMean(series: { year: number; mean: number; complete: boolean }[], from: number, to: number): number | null {
+  const vals = series.filter(s => s.complete && s.year >= from && s.year <= to).map(s => s.mean)
+  if (!vals.length) return null
+  return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10
+}

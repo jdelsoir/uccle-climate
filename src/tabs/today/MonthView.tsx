@@ -114,8 +114,8 @@ export default function MonthView({ year, mm, onPickDay }: { year: number; mm: s
 
         {capturing && summary && (
           <div className="border border-border bg-surface px-5 py-3 text-[11px] text-muted">
-            <p className="text-fg">{summary}</p>
-            <p className="mt-0.5">Uccle, Brussels · jdelsoir.github.io/uccle-climate</p>
+            {/* summary already shown above inside #month-capture; footer is attribution-only */}
+            <p>Uccle, Brussels · jdelsoir.github.io/uccle-climate</p>
           </div>
         )}
       </div>

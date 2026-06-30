@@ -22,6 +22,7 @@ function routeFetch(u: string) {
   if (u.includes('daynorm')) return daynorm
   if (u.includes('summary')) return summary
   if (u.includes('/month/')) return month
+  if (u.includes('/daily/')) return []
   return thisday
 }
 afterEach(() => vi.unstubAllGlobals())

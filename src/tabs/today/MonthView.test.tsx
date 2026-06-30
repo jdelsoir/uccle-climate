@@ -63,7 +63,7 @@ it('opens a month picker from the calendar tile and reports the chosen month-yea
 describe('existing MonthView behaviour', () => {
   const month = {
     mm: '06', normal: 17.0,
-    series: [{ year: 2000, mean: 16, complete: true }, { year: 2020, mean: 21, complete: true }, { year: 2026, mean: 18.4, complete: true }],
+    series: [{ year: 1920, mean: 15, complete: true }, { year: 2000, mean: 16, complete: true }, { year: 2020, mean: 21, complete: true }, { year: 2026, mean: 18.4, complete: true }],
     recordWarm: { year: 2020, v: 21 }, recordCold: { year: 2000, v: 16 },
     thenNow: { early: { from: 1833, to: 1900, mean: 16.1 }, recent: { from: 1996, to: 2025, mean: 18.0 } },
   }
@@ -132,5 +132,24 @@ describe('existing MonthView behaviour', () => {
     renderMonth({ cur: { year: 2026, mean: 19, complete: false }, normal: 18, recordWarm: { v: 19, year: 2026 } })
     expect(await screen.findByText(/so far/i)).toBeTruthy()
     expect(screen.queryByText(/on record/i)).toBeNull()
+  })
+
+  it('B1: shows the warming rate stat and viewed-year-relative then-now windows', async () => {
+    stubFetch({
+      'month/06.json': month,
+      'daynorm.json': { '1991-2020': [], '1961-1990': [] },
+      'daily/2026.json': [],
+    })
+    render(<MonthView mm="06" year={2026} onPickDay={vi.fn()} onPickMonth={vi.fn()} />)
+    // warming-rate StatCard (full record, since the earliest complete year 1920)
+    expect(await screen.findByText('Warming')).toBeInTheDocument()
+    // rising fixture (1920→15 … 2020→21) → positive rate with a leading + sign
+    expect(screen.getByText(/^\+\d+\.\d{2} °C\/decade$/)).toBeInTheDocument()
+    expect(screen.getByText('since 1920')).toBeInTheDocument()
+    // then-now windows are viewed-year-relative (2026 → then 1915–1925, recent 2015–2025), not the fixed 1833–1900/1996–2025
+    expect(screen.getByText('1915–1925')).toBeInTheDocument()
+    expect(screen.getByText('2015–2025')).toBeInTheDocument()
+    // fixed early window 1996–2025 from data.thenNow must not appear in the WarmingStrip
+    expect(screen.queryByText('1996–2025')).not.toBeInTheDocument()
   })
 })

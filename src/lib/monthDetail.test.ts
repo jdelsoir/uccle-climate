@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { monthDays, dayMix, recordsBroken, topWarmest, topColdest } from './monthDetail'
+import { monthDays, dayMix, recordsBroken, topWarmest, topColdest, windowMean } from './monthDetail'
 import type { DailyPoint } from '../types'
 
 const d = (mmdd: string, tmax: number, tmin: number, extra: Partial<DailyPoint> = {}): DailyPoint => ({ mmdd, tmax, tmin, ...extra })
@@ -35,5 +35,23 @@ describe('topWarmest / topColdest', () => {
   })
   it('coldest sorts by tmin asc', () => {
     expect(topColdest(days, 2).map(x => x.mmdd)).toEqual(['0604', '0602'])
+  })
+})
+
+describe('windowMean', () => {
+  const series = [
+    { year: 1918, mean: 14, complete: true },
+    { year: 1922, mean: 16, complete: true },
+    { year: 1950, mean: 99, complete: false },   // incomplete → excluded
+    { year: 2020, mean: 18, complete: true },
+  ]
+  it('averages complete years inside the window, rounded to 1 decimal', () => {
+    expect(windowMean(series, 1915, 1925)).toBe(15)     // (14+16)/2
+  })
+  it('excludes incomplete years', () => {
+    expect(windowMean(series, 1949, 1951)).toBeNull()   // only the incomplete 1950 is in range
+  })
+  it('returns null when no complete year falls in the window', () => {
+    expect(windowMean(series, 1700, 1800)).toBeNull()
   })
 })

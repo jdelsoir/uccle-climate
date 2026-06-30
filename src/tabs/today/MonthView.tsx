@@ -15,7 +15,8 @@ import HeroShell from '../../components/HeroShell'
 import MonthHeatmap from '../../components/MonthHeatmap'
 import NotableDays from '../../components/NotableDays'
 import { heroState, deltaLine, bannerClass, toneText } from '../../lib/heroState'
-import { monthDays, dayMix, recordsBroken, topWarmest, topColdest } from '../../lib/monthDetail'
+import { monthDays, dayMix, recordsBroken, topWarmest, topColdest, windowMean } from '../../lib/monthDetail'
+import { linregress, perDecade } from '../../lib/trend'
 import { monthSummary } from '../../lib/monthSummary'
 import { monthShareCaption } from '../../lib/shareText'
 import { shareNode } from '../../lib/share'
@@ -42,8 +43,12 @@ export default function MonthView({ year, mm, onPickDay, onPickMonth }: { year: 
   const rank = cur ? complete.filter(s => s.mean > cur.mean).length + 1 : null
   const delta = cur && data.normal != null ? Math.round((cur.mean - data.normal) * 10) / 10 : null
   const deltaWord = delta == null ? '' : delta > 0 ? 'warmer than normal' : delta < 0 ? 'cooler than normal' : 'at normal'
-  const tn = data.thenNow
-  const warmingDelta = tn.early.mean != null && tn.recent.mean != null ? Math.round((tn.recent.mean - tn.early.mean) * 10) / 10 : null
+  const fit = linregress(complete.map(s => ({ x: s.year, y: s.mean })))
+  const ratePerDecade = fit ? Math.round(perDecade(fit.slope) * 100) / 100 : null
+  const firstComplete = complete.length ? Math.min(...complete.map(s => s.year)) : null
+  const recentFrom = year - 11, recentTo = year - 1, thenFrom = year - 111, thenTo = year - 101
+  const recentMean = windowMean(data.series, recentFrom, recentTo)
+  const thenMean = windowMean(data.series, thenFrom, thenTo)
 
   const complete_ = cur?.complete === true
   const state = heroState({
@@ -154,13 +159,19 @@ export default function MonthView({ year, mm, onPickDay, onPickMonth }: { year: 
         {delta != null && <StatCard label="This year vs average" value={`${delta > 0 ? '+' : ''}${delta.toFixed(1)} °C`} sub={deltaWord} valueClass={delta > 0 ? 'text-warm' : delta < 0 ? 'text-accent' : 'text-fg'} />}
         <StatCard label={`Warmest ${name}`} value={fmtTemp(data.recordWarm?.v)} sub={data.recordWarm ? String(data.recordWarm.year) : undefined} valueClass="text-warm" />
         <StatCard label={`Coldest ${name}`} value={fmtTemp(data.recordCold?.v)} sub={data.recordCold ? String(data.recordCold.year) : undefined} valueClass="text-accent" />
+        {ratePerDecade != null && (
+          <StatCard label="Warming"
+            value={`${ratePerDecade > 0 ? '+' : ''}${ratePerDecade.toFixed(2)} °C/decade`}
+            sub={firstComplete != null ? `since ${firstComplete}` : 'full record'}
+            valueClass={ratePerDecade > 0 ? 'text-warm' : ratePerDecade < 0 ? 'text-accent' : 'text-fg'} />
+        )}
       </div>
 
-      {warmingDelta != null && (
+      {thenMean != null && recentMean != null && (
         <WarmingStrip label={`A warming ${name}`}
-          then={{ mean: tn.early.mean!, from: tn.early.from, to: tn.early.to }}
-          recent={{ mean: tn.recent.mean!, from: tn.recent.from, to: tn.recent.to }}
-          delta={warmingDelta} />
+          then={{ mean: thenMean, from: thenFrom, to: thenTo }}
+          recent={{ mean: recentMean, from: recentFrom, to: recentTo }}
+          delta={Math.round((recentMean - thenMean) * 10) / 10} />
       )}
 
       <input ref={pickerRef} type="month" tabIndex={-1} aria-hidden className="sr-only"
@@ -168,7 +179,7 @@ export default function MonthView({ year, mm, onPickDay, onPickMonth }: { year: 
         onChange={e => { const m = /^(\d{4})-(\d{2})$/.exec(e.target.value); if (m) onPickMonth(+m[1], +m[2]) }} />
 
       <PeriodScatter title={`Every ${name} mean`} data={complete.map(s => ({ year: s.year, mean: s.mean }))}
-        series={[{ key: 'mean', name: `${name} mean`, color: 'var(--accent)' }]} />
+        series={[{ key: 'mean', name: `${name} mean`, color: 'var(--accent)' }]} trendKey="mean" />
     </div>
   )
 }

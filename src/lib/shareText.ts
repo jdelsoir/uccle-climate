@@ -48,3 +48,12 @@ export function dayShareUrl(date: Date): string {
 export function shareCaption(sentence: string, date: Date): string {
   return `${sentence}\n${dayShareUrl(date)}`
 }
+
+// Deep link to a specific month (HashRouter ?m= form — Today.tsx reads the param).
+export function monthShareUrl(year: number, mm: string): string {
+  return `${APP_URL}#/today?m=${year}-${mm}`
+}
+
+export function monthShareCaption(sentence: string, year: number, mm: string): string {
+  return `${sentence}\n${monthShareUrl(year, mm)}`
+}

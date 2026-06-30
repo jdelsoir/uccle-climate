@@ -1,0 +1,29 @@
+import { tempColor } from './dayStats'
+import type { DailyPoint } from '../types'
+
+export function monthDays(daily: DailyPoint[], mm: string): DailyPoint[] {
+  return daily.filter(d => d.mmdd.slice(0, 2) === mm)
+}
+
+export function dayMix(days: DailyPoint[], normalFor: (mmdd: string) => number | null) {
+  let warm = 0, cool = 0, neutral = 0
+  for (const d of days) {
+    const c = tempColor(d.tmax, normalFor(d.mmdd))
+    if (c === 'text-warm') warm++
+    else if (c === 'text-accent') cool++
+    else neutral++
+  }
+  return { warm, cool, neutral, total: days.length }
+}
+
+export function recordsBroken(days: DailyPoint[]): number {
+  return days.reduce((n, d) => n + (d.recHi ? 1 : 0) + (d.recLo ? 1 : 0), 0)
+}
+
+export function topWarmest(days: DailyPoint[], n = 5): DailyPoint[] {
+  return [...days].sort((a, b) => b.tmax - a.tmax).slice(0, n)
+}
+
+export function topColdest(days: DailyPoint[], n = 5): DailyPoint[] {
+  return [...days].sort((a, b) => a.tmin - b.tmin).slice(0, n)
+}

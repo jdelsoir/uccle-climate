@@ -215,3 +215,31 @@ def month_data(recs, baseline=(1991, 2020), early=(1833, 1900), recent=(1996, 20
             },
         }
     return out
+
+def daily_data(recs):
+    by_md = defaultdict(list)
+    for r in recs:
+        by_md[(r["date"].month, r["date"].day)].append(r)
+    rec_hi, rec_lo = {}, {}
+    for md, rs in by_md.items():
+        rec_hi[md] = max(rs, key=lambda r: r["tmax"])["date"].year
+        rec_lo[md] = min(rs, key=lambda r: r["tmin"])["date"].year
+    by_year = defaultdict(list)
+    for r in recs:
+        by_year[r["date"].year].append(r)
+    out = {}
+    for y in sorted(by_year):
+        arr = []
+        for r in sorted(by_year[y], key=lambda r: r["date"]):
+            md = (r["date"].month, r["date"].day)
+            e = {"mmdd": f"{md[0]:02d}{md[1]:02d}", "tmax": r["tmax"], "tmin": r["tmin"]}
+            if r.get("provisional"):
+                e["provisional"] = True
+            else:
+                if rec_hi[md] == y:
+                    e["recHi"] = True
+                if rec_lo[md] == y:
+                    e["recLo"] = True
+            arr.append(e)
+        out[f"{y:04d}"] = arr
+    return out

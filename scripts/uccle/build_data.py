@@ -134,6 +134,9 @@ def build(text=None, records=None, archive=None, recent=None, today=None, out_di
     os.makedirs(os.path.join(out_dir, "month"), exist_ok=True)
     for mmkey, payload in derive.month_data(recs).items():
         _write(os.path.join(out_dir, "month", f"{mmkey}.json"), payload)
+    os.makedirs(os.path.join(out_dir, "daily"), exist_ok=True)
+    for ykey, payload in derive.daily_data(recs).items():
+        _write(os.path.join(out_dir, "daily", f"{ykey}.json"), payload)
 
 
 def _safe_warming_rate(annual):

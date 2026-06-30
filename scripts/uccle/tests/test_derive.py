@@ -1,6 +1,6 @@
 import datetime as dt
 import pytest
-from scripts.uccle.derive import annual_means, baseline_mean, anomalies, decadal_means, ols_slope_per_decade, percentile, doy_normals, per_date, threshold_counters, heatwave_days, growing_season, rankings, monthly_means
+from scripts.uccle.derive import annual_means, baseline_mean, anomalies, decadal_means, ols_slope_per_decade, percentile, doy_normals, per_date, threshold_counters, heatwave_days, growing_season, rankings, monthly_means, daily_data
 
 def day(y, m, d, tmax, tmin):
     return {"date": dt.date(y, m, d), "tmax": tmax, "tmin": tmin, "tmean": (tmax + tmin) / 2}
@@ -173,3 +173,29 @@ def test_per_date_propagates_provisional():
     by_year = {e["year"]: e for e in series}
     assert by_year[2026]["provisional"] is True       # provisional record → flagged
     assert "provisional" not in by_year[2024]          # normal record → key omitted
+
+def test_daily_data_groups_by_year_sorted():
+    recs = [day(2019, 6, 2, 25, 12), day(2019, 6, 1, 30, 9), day(1990, 6, 1, 20, 5)]
+    out = daily_data(recs)
+    assert set(out.keys()) == {"1990", "2019"}
+    assert [d["mmdd"] for d in out["2019"]] == ["0601", "0602"]   # date-sorted
+    assert out["2019"][0] == {"mmdd": "0601", "tmax": 30, "tmin": 9, "recHi": True}
+
+def test_daily_data_flags_record_holder_only():
+    recs = [day(1990, 6, 1, 20, 5), day(2019, 6, 1, 30, 9)]
+    out = daily_data(recs)
+    y1990 = {d["mmdd"]: d for d in out["1990"]}
+    y2019 = {d["mmdd"]: d for d in out["2019"]}
+    assert y2019["0601"]["recHi"] is True        # 2019 holds the 06-01 high (30)
+    assert "recLo" not in y2019["0601"]
+    assert y1990["0601"]["recLo"] is True         # 1990 holds the 06-01 low (5)
+    assert "recHi" not in y1990["0601"]
+
+def test_daily_data_suppresses_record_flag_on_provisional():
+    prov = day(2019, 6, 3, 40, 0); prov["provisional"] = True
+    recs = [day(1990, 6, 3, 25, 5), prov]
+    out = daily_data(recs)
+    y2019 = {d["mmdd"]: d for d in out["2019"]}
+    assert y2019["0603"]["provisional"] is True
+    assert "recHi" not in y2019["0603"]   # would be the record (40) but provisional → suppressed
+    assert "recLo" not in y2019["0603"]   # tmin 0 is lowest but provisional → suppressed

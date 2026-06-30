@@ -143,7 +143,8 @@ describe('existing MonthView behaviour', () => {
     render(<MonthView mm="06" year={2026} onPickDay={vi.fn()} onPickMonth={vi.fn()} />)
     // warming-rate StatCard (full record, since the earliest complete year 1920)
     expect(await screen.findByText('Warming')).toBeInTheDocument()
-    expect(screen.getByText(/°C\/decade/)).toBeInTheDocument()
+    // rising fixture (1920→15 … 2020→21) → positive rate with a leading + sign
+    expect(screen.getByText(/^\+\d+\.\d{2} °C\/decade$/)).toBeInTheDocument()
     expect(screen.getByText('since 1920')).toBeInTheDocument()
     // then-now windows are viewed-year-relative (2026 → then 1915–1925, recent 2015–2025), not the fixed 1833–1900/1996–2025
     expect(screen.getByText('1915–1925')).toBeInTheDocument()

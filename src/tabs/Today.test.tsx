@@ -71,3 +71,11 @@ it('lets ?d= win when both ?d and ?m are present', async () => {
   render(<MemoryRouter initialEntries={['/today?d=2010-03-04&m=2019-06']}><Today /></MemoryRouter>)
   expect(await screen.findByRole('radio', { name: 'day' })).toHaveAttribute('aria-checked', 'true')
 })
+
+it('clamps an out-of-range ?m= month and falls back to the current month-year', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
+  render(<MemoryRouter initialEntries={['/today?m=2019-13']}><Today /></MemoryRouter>)
+  // month 13 is invalid → cursor falls back to the current year, not 2019
+  expect(await screen.findByRole('radio', { name: 'month' })).toHaveAttribute('aria-checked', 'true')
+  expect(screen.queryByText('2019')).not.toBeInTheDocument()
+})

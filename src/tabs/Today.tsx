@@ -33,7 +33,7 @@ export default function Today() {
     return midnight(new Date())
   })
   const inMonthRange = (y: number, mo: number) =>
-    y >= 1833 && (y < now.getFullYear() || (y === now.getFullYear() && mo <= now.getMonth() + 1))
+    mo >= 1 && mo <= 12 && y >= 1833 && (y < now.getFullYear() || (y === now.getFullYear() && mo <= now.getMonth() + 1))
   const [month, setMonth] = useState(() => (mMatch && inMonthRange(+mMatch[1], +mMatch[2]) ? +mMatch[2] : now.getMonth() + 1))
   const [monthYear, setMonthYear] = useState(() => (mMatch && inMonthRange(+mMatch[1], +mMatch[2]) ? +mMatch[1] : now.getFullYear()))
   const [year, setYear] = useState<number | null>(null)

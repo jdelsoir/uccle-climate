@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Scatter, XAxis, YAxis, ResponsiveContainer, ComposedChart, CartesianGrid, Tooltip } from 'recharts'
+import { Scatter, XAxis, YAxis, ResponsiveContainer, ComposedChart, CartesianGrid, Tooltip, Line } from 'recharts'
+import { linregress } from '../lib/trend'
 
 const tooltipStyle = { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--fg)', fontSize: 12 }
 
@@ -13,12 +14,16 @@ export const PERIODS: { label: string; from: number; to: number }[] = [
 
 type Row = { year: number } & Record<string, number | undefined>
 
-export default function PeriodScatter({ data, series, title }: {
-  data: Row[]; series: { key: string; name: string; color: string }[]; title: string
+export default function PeriodScatter({ data, series, title, trendKey }: {
+  data: Row[]; series: { key: string; name: string; color: string }[]; title: string; trendKey?: string
 }) {
   const [idx, setIdx] = useState(0)
   const p = PERIODS[idx]
   const shown = data.filter(d => d.year >= p.from && d.year <= p.to)
+  const fit = trendKey
+    ? linregress(shown.filter(d => typeof d[trendKey] === 'number').map(d => ({ x: d.year, y: d[trendKey] as number })))
+    : null
+  const rows = fit ? shown.map(d => ({ ...d, __trend: fit.intercept + fit.slope * d.year })) : shown
   return (
     <div className="border border-border bg-surface p-4">
       <div className="mb-2 flex items-center justify-between gap-2">
@@ -29,16 +34,20 @@ export default function PeriodScatter({ data, series, title }: {
         </select>
       </div>
       <p className="mb-1 text-xs text-muted">
-        {series.map(s => <span key={s.key} className="mr-3"><span style={{ color: s.color }} aria-hidden>●</span> {s.name}</span>)} (°C)
+        {series.map(s => <span key={s.key} className="mr-3"><span style={{ color: s.color }} aria-hidden>●</span> {s.name}</span>)}
+        {fit && <span className="mr-3"><span className="text-muted" aria-hidden>– –</span> trend · shown period</span>}
+        (°C)
       </p>
       <div role="img" aria-label={`${title} — scatter chart by year`}>
         <ResponsiveContainer width="100%" height={240}>
-          <ComposedChart data={shown} margin={{ top: 8, right: 8, bottom: 0, left: -8 }}>
+          <ComposedChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: -8 }}>
             <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
             <XAxis dataKey="year" tick={{ fill: 'var(--muted)', fontSize: 11 }} stroke="var(--border)" />
             <YAxis tick={{ fill: 'var(--muted)', fontSize: 11 }} stroke="var(--border)" />
             <Tooltip contentStyle={tooltipStyle} />
             {series.map(s => <Scatter key={s.key} name={s.name} dataKey={s.key} fill={s.color} />)}
+            {fit && <Line type="linear" dataKey="__trend" name="trend · shown period"
+              stroke="var(--muted)" strokeWidth={2} strokeDasharray="5 4" dot={false} isAnimationActive={false} />}
           </ComposedChart>
         </ResponsiveContainer>
       </div>

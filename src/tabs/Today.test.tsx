@@ -54,3 +54,19 @@ test('deep-links to a specific day via ?d= query param', async () => {
   expect(await screen.findByText('JULY')).toBeInTheDocument()
   expect(screen.getByText('25')).toBeInTheDocument()
 })
+
+it('opens Month mode at the month-year from ?m=', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
+  render(<MemoryRouter initialEntries={['/today?m=2019-06']}><Today /></MemoryRouter>)
+  // Month-mode radio is selected and the month heading shows
+  expect(await screen.findByRole('radio', { name: 'month' })).toHaveAttribute('aria-checked', 'true')
+  // MonthView renders the CalendarTile header for the deep-linked month/year
+  expect(await screen.findByText(/JUNE/)).toBeInTheDocument()
+  expect(await screen.findByText('2019')).toBeInTheDocument()
+})
+
+it('lets ?d= win when both ?d and ?m are present', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
+  render(<MemoryRouter initialEntries={['/today?d=2010-03-04&m=2019-06']}><Today /></MemoryRouter>)
+  expect(await screen.findByRole('radio', { name: 'day' })).toHaveAttribute('aria-checked', 'true')
+})

@@ -10,13 +10,13 @@ import PeriodScatter from '../../components/PeriodScatter'
 import HeroShell from '../../components/HeroShell'
 import { heroState, deltaLine, bannerClass, toneText } from '../../lib/heroState'
 
-export default function MonthView({ mm, currentYear }: { mm: string; currentYear: number }) {
+export default function MonthView({ year, mm, onPickDay }: { year: number; mm: string; onPickDay?: (iso: string) => void }) {
   const { data, loading, error } = useMonth(mm)
   if (loading) return <Loading label="Loading month…" />
   if (error || !data) return <ErrorState label="Could not load this month." />
 
   const name = fmtMonth(mm)
-  const cur = data.series.find(s => s.year === currentYear)
+  const cur = data.series.find(s => s.year === year)
   const complete = data.series.filter(s => s.complete)
   const rank = cur ? complete.filter(s => s.mean > cur.mean).length + 1 : null
   const delta = cur && data.normal != null ? Math.round((cur.mean - data.normal) * 10) / 10 : null
@@ -28,8 +28,8 @@ export default function MonthView({ mm, currentYear }: { mm: string; currentYear
   const state = heroState({
     value: cur ? cur.mean : null,
     normal: data.normal,
-    brokeHigh: complete_ && data.recordWarm?.year === currentYear,
-    brokeLow: complete_ && data.recordCold?.year === currentYear,
+    brokeHigh: complete_ && data.recordWarm?.year === year,
+    brokeLow: complete_ && data.recordCold?.year === year,
   })
   const dl = deltaLine(state)
   const banner = !cur ? null
@@ -41,11 +41,13 @@ export default function MonthView({ mm, currentYear }: { mm: string; currentYear
     : `A typical ${name}`
   const bannerKey = complete_ ? state.key : 'close' // incomplete → neutral pill
 
+  void onPickDay // wired in full by Task 10
+
   return (
     <div className="space-y-4">
       <HeroShell tone={state.tone} intensity={state.intensity}>
         <div className="flex flex-wrap items-start gap-x-5 gap-y-3">
-          <CalendarTile header={name.toUpperCase()} body={currentYear} />
+          <CalendarTile header={name.toUpperCase()} body={year} />
           <div className="min-w-0 flex-1">
             {cur ? (
               <>
@@ -53,7 +55,7 @@ export default function MonthView({ mm, currentYear }: { mm: string; currentYear
                 <div><BigTemp v={cur.mean} className={`text-[40px] ${toneText(state.tone)}`} /></div>
                 {dl && <p className="mt-1 text-sm text-muted">{dl}</p>}
               </>
-            ) : <p className="text-sm text-muted">No data for {name} {currentYear} yet.</p>}
+            ) : <p className="text-sm text-muted">No data for {name} {year} yet.</p>}
           </div>
         </div>
         {banner && (
@@ -65,15 +67,15 @@ export default function MonthView({ mm, currentYear }: { mm: string; currentYear
 
       {cur && data.recordCold && data.recordWarm && (
         <div className="border border-border bg-surface p-5">
-          <p className="mb-2 text-[11px] uppercase tracking-[0.09em] text-muted">Where {currentYear} sits</p>
+          <p className="mb-2 text-[11px] uppercase tracking-[0.09em] text-muted">Where {year} sits</p>
           <RangeBar
             min={{ v: data.recordCold.v, label: `${data.recordCold.v}° coldest` }}
             max={{ v: data.recordWarm.v, label: `${data.recordWarm.v}° warmest` }}
             markers={[
               ...(data.normal != null ? [{ v: data.normal, label: `normal ${data.normal}°`, kind: 'tick' as const }] : []),
-              { v: cur.mean, label: `${currentYear} ${cur.mean}°`, kind: 'dot' as const },
+              { v: cur.mean, label: `${year} ${cur.mean}°`, kind: 'dot' as const },
             ]}
-            summary={`${name} ${currentYear} mean ${cur.mean}°, normal ${data.normal ?? '—'}°, between ${data.recordCold.v}° coldest and ${data.recordWarm.v}° warmest`} />
+            summary={`${name} ${year} mean ${cur.mean}°, normal ${data.normal ?? '—'}°, between ${data.recordCold.v}° coldest and ${data.recordWarm.v}° warmest`} />
         </div>
       )}
 

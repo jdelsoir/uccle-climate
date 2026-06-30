@@ -36,12 +36,12 @@ function renderMonth({ cur, normal = 17, rank = 1, completeCount = 10, recordWar
     thenNow: { early: { from: 1833, to: 1900, mean: 15.0 }, recent: { from: 1996, to: 2025, mean: 17.5 } },
   }
   vi.stubGlobal('fetch', vi.fn().mockImplementation(() => Promise.resolve({ ok: true, json: async () => data })))
-  render(<MonthView mm="06" currentYear={cur.year} />)
+  render(<MonthView mm="06" year={cur.year} />)
 }
 
 test('month: tile, mean, rank, stat cards, warming strip', async () => {
   vi.stubGlobal('fetch', vi.fn().mockImplementation(() => Promise.resolve({ ok: true, json: async () => month })))
-  render(<MonthView mm="06" currentYear={2026} />)
+  render(<MonthView mm="06" year={2026} />)
   await waitFor(() => expect(screen.getByText('18.4')).toBeInTheDocument())      // June 2026 mean (BigTemp number)
   expect(screen.getByText('JUNE')).toBeInTheDocument()                            // tile header
   expect(screen.getByText('2026')).toBeInTheDocument()                            // tile body

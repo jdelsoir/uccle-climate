@@ -73,6 +73,7 @@ export default function Today() {
   }
 
   const openDay = (iso: string) => { setDate(midnight(new Date(iso + 'T00:00:00'))); setMode('day') }
+  const openMonth = (y: number, mo: number) => { if (inMonthRange(y, mo)) { setMonthYear(y); setMonth(mo) } }
 
   return (
     <section className="fade-in space-y-4">
@@ -96,7 +97,7 @@ export default function Today() {
       </div>
 
       {mode === 'day' && <DayView date={date} min={MIN_DATE} max={maxDate} onChange={setDate} />}
-      {mode === 'month' && <MonthView year={monthYear} mm={mm} onPickDay={openDay} />}
+      {mode === 'month' && <MonthView year={monthYear} mm={mm} onPickDay={openDay} onPickMonth={openMonth} />}
       {mode === 'year' && <YearView year={selYear} />}
     </section>
   )

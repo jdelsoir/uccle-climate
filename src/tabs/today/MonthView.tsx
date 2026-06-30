@@ -21,13 +21,17 @@ import { monthShareCaption } from '../../lib/shareText'
 import { shareNode } from '../../lib/share'
 import { Share2 } from 'lucide-react'
 
-export default function MonthView({ year, mm, onPickDay }: { year: number; mm: string; onPickDay: (iso: string) => void }) {
+export default function MonthView({ year, mm, onPickDay, onPickMonth }: { year: number; mm: string; onPickDay: (iso: string) => void; onPickMonth: (year: number, month: number) => void }) {
   const { data, loading, error } = useMonth(mm)
   const daily = useDaily(year)
   const dayNorm = useDayNorm()
   const live = useTodayTemp()
   const [capturing, setCapturing] = useState(false)
   const busy = useRef(false)
+  const pickerRef = useRef<HTMLInputElement>(null)
+  const openPicker = () => { const el = pickerRef.current; if (!el) return; if (typeof el.showPicker === 'function') { try { el.showPicker(); return } catch { /* */ } } el.focus(); el.click() }
+  const nowD = new Date()
+  const maxMonth = `${nowD.getFullYear()}-${String(nowD.getMonth() + 1).padStart(2, '0')}`
 
   if (loading) return <Loading label="Loading month…" />
   if (error || !data) return <ErrorState label="Could not load this month." />
@@ -88,7 +92,7 @@ export default function MonthView({ year, mm, onPickDay }: { year: number; mm: s
       <div id="month-capture" className="space-y-4">
         <HeroShell tone={state.tone} intensity={state.intensity}>
           <div className="flex flex-wrap items-start gap-x-5 gap-y-3">
-            <CalendarTile header={name.toUpperCase()} body={year} />
+            <CalendarTile header={name.toUpperCase()} body={year} onClick={openPicker} ariaLabel={`Change month — ${name} ${year}`} />
             <div className="min-w-0 flex-1">
               {cur ? (
                 <>
@@ -158,6 +162,10 @@ export default function MonthView({ year, mm, onPickDay }: { year: number; mm: s
           recent={{ mean: tn.recent.mean!, from: tn.recent.from, to: tn.recent.to }}
           delta={warmingDelta} />
       )}
+
+      <input ref={pickerRef} type="month" tabIndex={-1} aria-hidden className="sr-only"
+        value={`${year}-${mm}`} min="1833-01" max={maxMonth}
+        onChange={e => { const m = /^(\d{4})-(\d{2})$/.exec(e.target.value); if (m) onPickMonth(+m[1], +m[2]) }} />
 
       <PeriodScatter title={`Every ${name} mean`} data={complete.map(s => ({ year: s.year, mean: s.mean }))}
         series={[{ key: 'mean', name: `${name} mean`, color: 'var(--accent)' }]} />

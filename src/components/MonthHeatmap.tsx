@@ -38,7 +38,7 @@ export default function MonthHeatmap({ year, mm, days, normalFor, liveToday, onP
           const label = tmax != null
             ? `${name} ${dnum}, ${year} — high ${tmax.toFixed(1)}°${rec ? ', record' : ''}${live ? ', today' : ''}`
             : `${name} ${dnum}, ${year} — no data`
-          if (tmax == null) {
+          if (tmax == null || future) { // future days inert even if data leaked in (pipeline strips dates >= today)
             return <div key={dnum} role="gridcell" aria-label={label} className={`min-h-[52px] ${tint}`} />
           }
           return (

@@ -15,12 +15,13 @@ import HeroShell from '../../components/HeroShell'
 import MonthHeatmap from '../../components/MonthHeatmap'
 import NotableDays from '../../components/NotableDays'
 import { heroState, deltaLine, bannerClass, toneText } from '../../lib/heroState'
-import { monthDays, dayMix, recordsBroken, topWarmest, topColdest, windowMean } from '../../lib/monthDetail'
+import { monthDays, dayMix, recordsBroken, topWarmest, topColdest, windowMean, monthCounters } from '../../lib/monthDetail'
+import MonthCounters from '../../components/MonthCounters'
 import { linregress, perDecade } from '../../lib/trend'
 import { monthSummary } from '../../lib/monthSummary'
 import { monthShareCaption } from '../../lib/shareText'
 import { shareNode } from '../../lib/share'
-import { Share2 } from 'lucide-react'
+import { Share2, ArrowUp, ArrowDown } from 'lucide-react'
 
 export default function MonthView({ year, mm, onPickDay, onPickMonth }: { year: number; mm: string; onPickDay: (iso: string) => void; onPickMonth: (year: number, month: number) => void }) {
   const { data, loading, error } = useMonth(mm)
@@ -76,6 +77,7 @@ export default function MonthView({ year, mm, onPickDay, onPickMonth }: { year: 
   const warmest = topWarmest(mDays)
   const coldest = topColdest(mDays)
   const summary = mDays.length ? monthSummary({ warm: mix.warm, cool: mix.cool, total: mix.total, records, soFar: !complete_ }) : null
+  const counts = monthCounters(mDays)
 
   const todayMM = todayMMDD().slice(0, 2)
   const liveToday = year === new Date().getFullYear() && mm === todayMM && live.data
@@ -104,6 +106,13 @@ export default function MonthView({ year, mm, onPickDay, onPickMonth }: { year: 
                   <p className="text-[11px] uppercase tracking-[0.09em] text-muted">{state.word}</p>
                   <div><BigTemp v={cur.mean} className={`text-[40px] ${toneText(state.tone)}`} /></div>
                   {dl && <p className="mt-1 text-sm text-muted">{dl}</p>}
+                  {cur.meanMax != null && cur.meanMin != null && (
+                    <p className="mt-1 flex items-center gap-2 text-sm text-muted">
+                      <span className="inline-flex items-center gap-0.5"><ArrowUp size={13} aria-hidden /> avg high {cur.meanMax.toFixed(1)}°</span>
+                      <span aria-hidden>·</span>
+                      <span className="inline-flex items-center gap-0.5"><ArrowDown size={13} aria-hidden /> avg low {cur.meanMin.toFixed(1)}°</span>
+                    </p>
+                  )}
                 </>
               ) : <p className="text-sm text-muted">No data for {name} {year} yet.</p>}
             </div>
@@ -166,6 +175,10 @@ export default function MonthView({ year, mm, onPickDay, onPickMonth }: { year: 
             valueClass={ratePerDecade > 0 ? 'text-warm' : ratePerDecade < 0 ? 'text-accent' : 'text-fg'} />
         )}
       </div>
+
+      {daily.data && (
+        <MonthCounters name={name} counts={counts} normals={data.counterNormals} soFar={!complete_} />
+      )}
 
       {thenMean != null && recentMean != null && (
         <WarmingStrip label={`A warming ${name}`}

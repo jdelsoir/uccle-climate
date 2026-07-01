@@ -144,7 +144,7 @@ def test_monthly_means_and_completeness():
     full = month_recs(2000, 6, 30, 18.0)     # June has 30 days → complete
     partial = month_recs(2026, 6, 26, 20.0)  # 26 < 30-3 → incomplete
     mm = monthly_means(full + partial)
-    assert mm[(2000, 6)] == {"mean": 18.0, "n": 30, "complete": True}
+    assert mm[(2000, 6)] == {"mean": 18.0, "meanMax": 23.0, "meanMin": 13.0, "n": 30, "complete": True}
     assert mm[(2026, 6)]["complete"] is False
     assert mm[(2026, 6)]["mean"] == 20.0
 
@@ -155,7 +155,7 @@ def test_month_data_records_normal_thennow():
     md = month_data(recs, baseline=(1990, 2020), early=(1833, 1990), recent=(2000, 2025))
     june = md["06"]
     assert june["mm"] == "06"
-    assert {"year": 2020, "mean": 20.0, "complete": True} in june["series"]
+    assert {"year": 2020, "mean": 20.0, "meanMax": 25.0, "meanMin": 15.0, "complete": True} in june["series"]
     assert any(s["year"] == 2026 and s["complete"] is False for s in june["series"])
     assert june["recordWarm"] == {"year": 2020, "v": 20.0}   # 2026 excluded
     assert june["recordCold"] == {"year": 1990, "v": 15.0}

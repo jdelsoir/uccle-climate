@@ -181,11 +181,18 @@ def per_date(recs, early=(1833, 1900), recent=(1996, 2025)):
 def monthly_means(recs):
     by = defaultdict(list)
     for r in recs:
-        by[(r["date"].year, r["date"].month)].append(r["tmean"])
+        by[(r["date"].year, r["date"].month)].append(r)
     out = {}
-    for (y, m), vals in by.items():
+    for (y, m), rs in by.items():
         dim = calendar.monthrange(y, m)[1]
-        out[(y, m)] = {"mean": round(sum(vals) / len(vals), 2), "n": len(vals), "complete": len(vals) >= dim - 3}
+        n = len(rs)
+        out[(y, m)] = {
+            "mean": round(sum(r["tmean"] for r in rs) / n, 2),
+            "meanMax": round(sum(r["tmax"] for r in rs) / n, 2),
+            "meanMin": round(sum(r["tmin"] for r in rs) / n, 2),
+            "n": n,
+            "complete": n >= dim - 3,
+        }
     return out
 
 def month_data(recs, baseline=(1991, 2020), early=(1833, 1900), recent=(1996, 2025)):
@@ -196,7 +203,7 @@ def month_data(recs, baseline=(1991, 2020), early=(1833, 1900), recent=(1996, 20
     out = {}
     for m in range(1, 13):
         entries = sorted(by_month.get(m, []), key=lambda t: t[0])
-        series = [{"year": y, "mean": info["mean"], "complete": info["complete"]} for y, info in entries]
+        series = [{"year": y, "mean": info["mean"], "meanMax": info["meanMax"], "meanMin": info["meanMin"], "complete": info["complete"]} for y, info in entries]
         complete = [(y, info["mean"]) for y, info in entries if info["complete"]]
         warm = max(complete, key=lambda t: t[1]) if complete else None
         cold = min(complete, key=lambda t: t[1]) if complete else None

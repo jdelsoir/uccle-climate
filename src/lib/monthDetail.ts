@@ -33,3 +33,15 @@ export function windowMean(series: { year: number; mean: number; complete: boole
   if (!vals.length) return null
   return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10
 }
+
+export function monthCounters(days: DailyPoint[]): { SU: number; hot30: number; TR: number; FD: number; ID: number } {
+  let SU = 0, hot30 = 0, TR = 0, FD = 0, ID = 0
+  for (const d of days) {
+    if (d.tmax >= 25) SU++
+    if (d.tmax >= 30) hot30++
+    if (d.tmin >= 20) TR++
+    if (d.tmin < 0) FD++
+    if (d.tmax < 0) ID++
+  }
+  return { SU, hot30, TR, FD, ID }
+}

@@ -1,6 +1,6 @@
 import datetime as dt
 import pytest
-from scripts.uccle.derive import annual_means, baseline_mean, anomalies, decadal_means, ols_slope_per_decade, percentile, doy_normals, per_date, threshold_counters, heatwave_days, growing_season, rankings, monthly_means, daily_data
+from scripts.uccle.derive import annual_means, baseline_mean, anomalies, decadal_means, ols_slope_per_decade, percentile, doy_normals, per_date, threshold_counters, heatwave_days, growing_season, rankings, monthly_means, daily_data, monthly_counter_normals
 
 def day(y, m, d, tmax, tmin):
     return {"date": dt.date(y, m, d), "tmax": tmax, "tmin": tmin, "tmean": (tmax + tmin) / 2}
@@ -144,7 +144,7 @@ def test_monthly_means_and_completeness():
     full = month_recs(2000, 6, 30, 18.0)     # June has 30 days → complete
     partial = month_recs(2026, 6, 26, 20.0)  # 26 < 30-3 → incomplete
     mm = monthly_means(full + partial)
-    assert mm[(2000, 6)] == {"mean": 18.0, "n": 30, "complete": True}
+    assert mm[(2000, 6)] == {"mean": 18.0, "meanMax": 23.0, "meanMin": 13.0, "n": 30, "complete": True}
     assert mm[(2026, 6)]["complete"] is False
     assert mm[(2026, 6)]["mean"] == 20.0
 
@@ -155,7 +155,7 @@ def test_month_data_records_normal_thennow():
     md = month_data(recs, baseline=(1990, 2020), early=(1833, 1990), recent=(2000, 2025))
     june = md["06"]
     assert june["mm"] == "06"
-    assert {"year": 2020, "mean": 20.0, "complete": True} in june["series"]
+    assert {"year": 2020, "mean": 20.0, "meanMax": 25.0, "meanMin": 15.0, "complete": True} in june["series"]
     assert any(s["year"] == 2026 and s["complete"] is False for s in june["series"])
     assert june["recordWarm"] == {"year": 2020, "v": 20.0}   # 2026 excluded
     assert june["recordCold"] == {"year": 1990, "v": 15.0}
@@ -199,3 +199,29 @@ def test_daily_data_suppresses_record_flag_on_provisional():
     assert y2019["0603"]["provisional"] is True
     assert "recHi" not in y2019["0603"]   # would be the record (40) but provisional → suppressed
     assert "recLo" not in y2019["0603"]   # tmin 0 is lowest but provisional → suppressed
+
+def test_monthly_counter_normals_averages_complete_baseline_years():
+    # 1991: 4 summer days (tmax>=25); 1992: 6 summer days → SU normal 5.0
+    y1 = month_recs(1991, 6, 30, 10.0)          # base tmax 15 (<25), tmin 5
+    for r in y1[:4]:
+        r["tmax"] = 26.0
+    y2 = month_recs(1992, 6, 30, 10.0)
+    for r in y2[:6]:
+        r["tmax"] = 26.0
+    partial = month_recs(1993, 6, 20, 30.0)     # incomplete (20 < 27) → excluded
+    outside = month_recs(2050, 6, 30, 30.0)     # out of baseline → excluded
+    normals = monthly_counter_normals(y1 + y2 + partial + outside, baseline=(1991, 2020))
+    assert normals["06"]["SU"] == 5.0
+    assert normals["06"]["FD"] == 0.0           # tmin 5 → never <0
+    assert normals["06"]["hot30"] == 0.0        # tmax 26 < 30
+
+def test_monthly_counter_normals_none_when_no_complete_baseline_year():
+    normals = monthly_counter_normals(month_recs(2050, 6, 30, 20.0), baseline=(1991, 2020))
+    assert normals["06"] is None
+
+def test_month_data_includes_counter_normals():
+    from scripts.uccle.derive import month_data
+    md = month_data(month_recs(2000, 6, 30, 26.0), baseline=(1991, 2020))   # tmax 31 → SU & hot30 all 30 days
+    # 2000 is in baseline and complete → June counterNormals present
+    assert md["06"]["counterNormals"]["SU"] == 30.0
+    assert md["06"]["counterNormals"]["hot30"] == 30.0

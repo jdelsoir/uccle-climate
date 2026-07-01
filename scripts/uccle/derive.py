@@ -181,22 +181,53 @@ def per_date(recs, early=(1833, 1900), recent=(1996, 2025)):
 def monthly_means(recs):
     by = defaultdict(list)
     for r in recs:
-        by[(r["date"].year, r["date"].month)].append(r["tmean"])
+        by[(r["date"].year, r["date"].month)].append(r)
     out = {}
-    for (y, m), vals in by.items():
+    for (y, m), rs in by.items():
         dim = calendar.monthrange(y, m)[1]
-        out[(y, m)] = {"mean": round(sum(vals) / len(vals), 2), "n": len(vals), "complete": len(vals) >= dim - 3}
+        n = len(rs)
+        out[(y, m)] = {
+            "mean": round(sum(r["tmean"] for r in rs) / n, 2),
+            "meanMax": round(sum(r["tmax"] for r in rs) / n, 2),
+            "meanMin": round(sum(r["tmin"] for r in rs) / n, 2),
+            "n": n,
+            "complete": n >= dim - 3,
+        }
+    return out
+
+def monthly_counter_normals(recs, baseline=(1991, 2020)):
+    by = defaultdict(list)
+    for r in recs:
+        by[(r["date"].year, r["date"].month)].append(r)
+    per_month = {m: {"SU": [], "hot30": [], "TR": [], "FD": [], "ID": []} for m in range(1, 13)}
+    for (y, m), rs in by.items():
+        if not (baseline[0] <= y <= baseline[1]):
+            continue
+        dim = calendar.monthrange(y, m)[1]
+        if len(rs) < dim - 3:
+            continue
+        per_month[m]["SU"].append(sum(1 for r in rs if r["tmax"] >= 25))
+        per_month[m]["hot30"].append(sum(1 for r in rs if r["tmax"] >= 30))
+        per_month[m]["TR"].append(sum(1 for r in rs if r["tmin"] >= 20))
+        per_month[m]["FD"].append(sum(1 for r in rs if r["tmin"] < 0))
+        per_month[m]["ID"].append(sum(1 for r in rs if r["tmax"] < 0))
+    out = {}
+    for m in range(1, 13):
+        counts = per_month[m]
+        out[f"{m:02d}"] = ({k: round(sum(v) / len(v), 1) for k, v in counts.items()}
+                           if counts["SU"] else None)
     return out
 
 def month_data(recs, baseline=(1991, 2020), early=(1833, 1900), recent=(1996, 2025)):
     mm = monthly_means(recs)
+    counter_normals = monthly_counter_normals(recs, baseline)
     by_month = defaultdict(list)               # month -> [(year, info)]
     for (y, m), info in mm.items():
         by_month[m].append((y, info))
     out = {}
     for m in range(1, 13):
         entries = sorted(by_month.get(m, []), key=lambda t: t[0])
-        series = [{"year": y, "mean": info["mean"], "complete": info["complete"]} for y, info in entries]
+        series = [{"year": y, "mean": info["mean"], "meanMax": info["meanMax"], "meanMin": info["meanMin"], "complete": info["complete"]} for y, info in entries]
         complete = [(y, info["mean"]) for y, info in entries if info["complete"]]
         warm = max(complete, key=lambda t: t[1]) if complete else None
         cold = min(complete, key=lambda t: t[1]) if complete else None
@@ -209,6 +240,7 @@ def month_data(recs, baseline=(1991, 2020), early=(1833, 1900), recent=(1996, 20
             "recordWarm": {"year": warm[0], "v": warm[1]} if warm else None,
             "recordCold": {"year": cold[0], "v": cold[1]} if cold else None,
             "normal": round(sum(base_vals) / len(base_vals), 2) if base_vals else None,
+            "counterNormals": counter_normals[f"{m:02d}"],
             "thenNow": {
                 "early": {"from": early[0], "to": early[1], "mean": round(sum(early_vals) / len(early_vals), 2) if early_vals else None},
                 "recent": {"from": recent[0], "to": recent[1], "mean": round(sum(recent_vals) / len(recent_vals), 2) if recent_vals else None},

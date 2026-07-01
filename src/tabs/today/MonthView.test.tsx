@@ -63,8 +63,9 @@ it('opens a month picker from the calendar tile and reports the chosen month-yea
 describe('existing MonthView behaviour', () => {
   const month = {
     mm: '06', normal: 17.0,
-    series: [{ year: 1920, mean: 15, complete: true }, { year: 2000, mean: 16, complete: true }, { year: 2020, mean: 21, complete: true }, { year: 2026, mean: 18.4, complete: true }],
+    series: [{ year: 1920, mean: 15, complete: true }, { year: 2000, mean: 16, complete: true }, { year: 2020, mean: 21, complete: true }, { year: 2026, mean: 18.4, meanMax: 23.1, meanMin: 13.7, complete: true }],
     recordWarm: { year: 2020, v: 21 }, recordCold: { year: 2000, v: 16 },
+    counterNormals: { SU: 7, hot30: 1, TR: 0.4, FD: 0, ID: 0 },
     thenNow: { early: { from: 1833, to: 1900, mean: 16.1 }, recent: { from: 1996, to: 2025, mean: 18.0 } },
   }
 
@@ -151,5 +152,25 @@ describe('existing MonthView behaviour', () => {
     expect(screen.getByText('2015–2025')).toBeInTheDocument()
     // fixed early window 1996–2025 from data.thenNow must not appear in the WarmingStrip
     expect(screen.queryByText('1996–2025')).not.toBeInTheDocument()
+  })
+
+  it('B2: shows the hero high/low split and the counters card', async () => {
+    stubFetch({
+      'month/06.json': month,
+      'daynorm.json': { '1991-2020': [], '1961-1990': [] },
+      'daily/2026.json': [
+        { mmdd: '0601', tmax: 31, tmin: 21 },   // SU, hot30, TR
+        { mmdd: '0602', tmax: 26, tmin: 12 },   // SU
+      ],
+    })
+    render(<MonthView mm="06" year={2026} onPickDay={vi.fn()} onPickMonth={vi.fn()} />)
+    // hero high/low split from meanMax/meanMin
+    expect(await screen.findByText(/avg high 23\.1°/)).toBeInTheDocument()
+    expect(screen.getByText(/avg low 13\.7°/)).toBeInTheDocument()
+    // counters card: 2 summer days (normal 7), 1 hot day (normal 1)
+    expect(screen.getByText('This June by the numbers')).toBeInTheDocument()
+    expect(screen.getByText('summer days')).toBeInTheDocument()
+    expect(screen.getByText(/normal 7/)).toBeInTheDocument()
+    expect(screen.queryByText('frost days')).not.toBeInTheDocument()
   })
 })

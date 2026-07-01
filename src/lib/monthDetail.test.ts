@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { monthDays, dayMix, recordsBroken, topWarmest, topColdest, windowMean } from './monthDetail'
+import { monthDays, dayMix, recordsBroken, topWarmest, topColdest, windowMean, monthCounters } from './monthDetail'
 import type { DailyPoint } from '../types'
 
 const d = (mmdd: string, tmax: number, tmin: number, extra: Partial<DailyPoint> = {}): DailyPoint => ({ mmdd, tmax, tmin, ...extra })
@@ -53,5 +53,21 @@ describe('windowMean', () => {
   })
   it('returns null when no complete year falls in the window', () => {
     expect(windowMean(series, 1700, 1800)).toBeNull()
+  })
+})
+
+describe('monthCounters', () => {
+  const d = (mmdd: string, tmax: number, tmin: number): DailyPoint => ({ mmdd, tmax, tmin })
+  it('counts each threshold over the days', () => {
+    const days = [
+      d('0601', 31, 21),   // SU, hot30, TR
+      d('0602', 26, 12),   // SU
+      d('0603', 20, -1),   // FD
+      d('0604', -2, -5),   // FD, ID
+    ]
+    expect(monthCounters(days)).toEqual({ SU: 2, hot30: 1, TR: 1, FD: 2, ID: 1 })
+  })
+  it('returns all-zero for no qualifying days', () => {
+    expect(monthCounters([d('0610', 18, 8)])).toEqual({ SU: 0, hot30: 0, TR: 0, FD: 0, ID: 0 })
   })
 })

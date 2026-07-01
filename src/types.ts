@@ -25,10 +25,11 @@ export interface ThisDay {
 }
 export interface MonthData {
   mm: string
-  series: { year: number; mean: number; complete: boolean }[]
+  series: { year: number; mean: number; meanMax?: number; meanMin?: number; complete: boolean }[]
   recordWarm: { year: number; v: number } | null
   recordCold: { year: number; v: number } | null
   normal: number | null
+  counterNormals: { SU: number; hot30: number; TR: number; FD: number; ID: number } | null
   thenNow: { early: { from: number; to: number; mean: number | null }; recent: { from: number; to: number; mean: number | null } }
 }
 export interface DailyPoint { mmdd: string; tmax: number; tmin: number; provisional?: boolean; recHi?: boolean; recLo?: boolean }

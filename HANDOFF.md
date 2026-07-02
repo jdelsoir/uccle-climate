@@ -1,29 +1,21 @@
-## Session 2026-07-01
+# HANDOFF
 
-Shipped the full **Month-tab feature arc** (Phase A → month-picker → B1 → B2), each via the Superpowers flow (brainstorm → spec → plan → subagent-driven execution → opus whole-branch review → merge → CI deploy → live-validate). All live on https://jdelsoir.github.io/uccle-climate/.
+## Session 2026-07-02
+
+Research-only session: ran the deep-research workflow on "creative, minimalistic ways to improve the Year screen". No code changes.
 
 ## State
-- **Month tab is feature-complete. Nothing parked.**
-- Phase A — "the month in detail": new per-year `daily/YYYY.json` (provisional-aware record flags) → `MonthHeatmap` (click→Day), `monthSummary` day-mix/records line, `NotableDays` warmest/coldest toggle, hero+heatmap share, year-aware Month cursor + `?m=` deep link.
-- Month picker: native `<input type="month">` on the CalendarTile (fast jump; `?m=` clamped 1–12).
-- Phase B1 — "how this month is changing": `lib/trend.ts` (OLS) → Warming °/decade StatCard, opt-in trend line on `PeriodScatter` (fits shown period), then-now parity with Day (`windowMean`).
-- Phase B2 — "highs, lows & counts": pipeline `meanMax`/`meanMin` + `monthly_counter_normals` → hero high/low subline + `MonthCounters` card (in-season counts vs 1991–2020 normal).
-- Latest `main` = commit `9c95886` (incl. keepalive merge). Full suite: 161 vitest / 33 pytest green; prod build clean.
-- Specs/plans in `docs/superpowers/`; per-run ledgers in `.superpowers/sdd/` (git-ignored scratch).
+- **Year-screen research complete**: 10 ranked ideas with sources + recommended Phase C scope, written to `docs/superpowers/research/year-screen-ideas.md`.
+- Workflow stats: 5 search angles, 20 sources, 86 claims, 25 verified → 24 confirmed / 1 refuted. Synthesis agent died on a session limit; final report synthesized inline from the confirmed claims (raw claim dump was in the session task output, now superseded by the docs file).
+- Month tab remains feature-complete (Phases A + B1 + B2 shipped, see previous handoff / CLAUDE.md History). Latest `main` unchanged this session apart from docs.
 
 ## Decisions
-- **Phased delivery** each time (build highest-value/app-side sub-phase first): Phase A before B; B1 (app-side, no pipeline) before B2 (needs pipeline data). Rationale: faster feedback, smaller reviews, ship value incrementally.
-- **Data-layer split**: within-month detail from per-year `daily/YYYY.json` (lazy per viewed year, ~193 files) rather than bloating `month/MM.json` or 2,300 per-month-year files.
-- **`tempColor` single source of truth** for warm/cool everywhere (heatmap tint, day-mix); thresholds for counters duplicated across 3 sites (`threshold_counters`, `monthly_counter_normals`, `monthCounters`) — documented in CLAUDE.md as change-blast-radius.
-- **Record flags provisional-aware** in `daily/YYYY.json` (suppressed on provisional days) — fixes the blind-spot for the Month path (Records tab + Day banner still blind).
-- Model tiering in subagent execution: haiku for transcription tasks, sonnet for integration, opus for whole-branch reviews.
+- **Recommended Year Phase C scope**: #1 daily-anomaly year strip + #2 full-year calendar heatmap (reuse `MonthHeatmap`) + #4 year counters card (reuse `monthCounters`) + #5 records tally (`recHi`/`recLo` counts) — mirrors Month Phase A/B2 with near-total code reuse; #10 year share card rides free once #1 exists. Rationale: highest signal, lowest new-surface risk, design parity with Month.
+- #3 all-record stripe timeline = cheap standalone add; #6 distribution histogram / #7 radial year plot = distinctive but higher design risk — park unless a share-visual is wanted.
 
 ## Open questions
-- None blocking.
+- Which Phase C scope to actually build (recommended set above vs a subset vs adding #3).
 
-## Next steps (parked fast-follows, non-blocking — see CLAUDE.md "Known fast-follows")
-- Drop the now-dead `month_data.thenNow` field + emission (unused since B1's relative-window switch).
-- `summary.extremes`/`summary.records` still provisional-blind (Records tab + Day record-broken banner can transiently show a forecast-filled day until ERA5 finalizes).
-- Recharts ~600 kB bundle — code-split charts to halve initial JS.
-- `useSummary`/`useDayNorm`/`useTodayTemp`/`useDaily` lack in-app fetch dedup.
-- Minor test-hardening deferred during reviews (recorded in `.superpowers/sdd/progress.md` per phase).
+## Next steps
+- Pick Year Phase C scope → superpowers brainstorm → spec in `docs/superpowers/specs/` → plan → subagent-driven execution (standing flow).
+- Parked fast-follows unchanged (see CLAUDE.md "Known fast-follows"): dead `month_data.thenNow` cleanup, provisional-blind `summary.extremes`/`records`, Recharts code-split, fetch dedup, minor test hardening.

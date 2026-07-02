@@ -90,6 +90,7 @@ Superpowers flow: **brainstorm → design spec → implementation plan → subag
 - Recharts ~600 kB bundle — code-split charts to roughly halve initial JS.
 - **`summary.extremes`/`summary.records` are still provisional-blind:** a hot recent forecast-filled day can transiently top them (and fire the Day record-broken banner) until ERA5 finalizes; next daily rebuild self-corrects. (The new `daily/YYYY.json` `recHi`/`recLo` flags ARE provisional-aware, so the Month heatmap/summary don't show false records — only the Records tab + Day banner remain blind.)
 - **Year hero has no share button** (Day + Month now do).
+- **Year Phase C candidates researched** (deep-research, 2026-07): 10 ranked minimal-display ideas + recommended scope in `docs/superpowers/research/year-screen-ideas.md`.
 - **Month tab complete:** Phases A + B1 + B2 all shipped. No Month phases remain parked.
 - **`thenNow` is now dead data:** `month_data.thenNow` (pipeline) is no longer read by the app after B1's relative-window switch; could drop the field + emission in a cleanup.
 - Month `recordsBroken` counts a both-records day as 2; legacy MonthView tests stub `daily/2019.json` regardless of the viewed year (pass anyway).

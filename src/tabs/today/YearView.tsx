@@ -1,4 +1,5 @@
 import { useSummary } from '../../data/useSummary'
+import { useYear } from '../../data/useYear'
 import { fmtTemp, ordinal } from '../../lib/format'
 import { Loading, ErrorState } from '../../components/States'
 import CalendarTile from '../../components/CalendarTile'
@@ -8,6 +9,7 @@ import StatCard from '../../components/StatCard'
 import WarmingStrip from '../../components/WarmingStrip'
 import PeriodScatter from '../../components/PeriodScatter'
 import HeroShell from '../../components/HeroShell'
+import MonthGrid from '../../components/MonthGrid'
 import { heroState, deltaLine, bannerClass, toneText } from '../../lib/heroState'
 
 type Annual = { year: number; mean: number; incomplete: boolean }
@@ -16,8 +18,9 @@ function yearWindowMean(annual: Annual[], from: number, to: number): number | nu
   return v.length ? Math.round((v.reduce((s, x) => s + x, 0) / v.length) * 10) / 10 : null
 }
 
-export default function YearView({ year }: { year: number }) {
+export default function YearView({ year, onPickMonth }: { year: number; onPickMonth: (year: number, month: number) => void }) {
   const { summary, loading, error } = useSummary()
+  const { data: yearMonths } = useYear(year)
   if (loading) return <Loading label="Loading year…" />
   if (error || !summary) return <ErrorState label="Could not load data." />
 
@@ -73,6 +76,10 @@ export default function YearView({ year }: { year: number }) {
           </div>
         )}
       </HeroShell>
+
+      {Array.isArray(yearMonths) && yearMonths.length > 0 && (
+        <MonthGrid year={year} months={yearMonths} onPickMonth={onPickMonth} />
+      )}
 
       {a && recordWarm && recordCold && (
         <div className="border border-border bg-surface p-5">

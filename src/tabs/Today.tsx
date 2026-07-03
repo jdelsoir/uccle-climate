@@ -98,7 +98,7 @@ export default function Today() {
 
       {mode === 'day' && <DayView date={date} min={MIN_DATE} max={maxDate} onChange={setDate} />}
       {mode === 'month' && <MonthView year={monthYear} mm={mm} onPickDay={openDay} onPickMonth={openMonth} />}
-      {mode === 'year' && <YearView year={selYear} />}
+      {mode === 'year' && <YearView year={selYear} onPickMonth={openMonth} />}
     </section>
   )
 }

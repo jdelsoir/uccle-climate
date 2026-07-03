@@ -59,12 +59,12 @@ function renderYear({ a: aEntry, normal = 10, rank = 1, total = 10, recordWarm, 
     },
   }
   vi.stubGlobal('fetch', vi.fn().mockImplementation(() => Promise.resolve({ ok: true, json: async () => data })))
-  render(<YearView year={aEntry.year} />)
+  render(<YearView year={aEntry.year} onPickMonth={vi.fn()} />)
 }
 
 test('year: tile, mean, rank, stat cards', async () => {
   vi.stubGlobal('fetch', vi.fn().mockImplementation(() => Promise.resolve({ ok: true, json: async () => summary })))
-  render(<YearView year={2026} />)
+  render(<YearView year={2026} onPickMonth={vi.fn()} />)
   await waitFor(() => expect(screen.getByText('11.8')).toBeInTheDocument())  // 2026 annual mean
   expect(screen.getByText('YEAR')).toBeInTheDocument()
   expect(screen.getByText('2026')).toBeInTheDocument()
@@ -77,7 +77,7 @@ test('year: tile, mean, rank, stat cards', async () => {
 
 test('year incomplete: (so far) label shown, rank badge suppressed', async () => {
   vi.stubGlobal('fetch', vi.fn().mockImplementation(() => Promise.resolve({ ok: true, json: async () => summaryIncomplete })))
-  render(<YearView year={2026} />)
+  render(<YearView year={2026} onPickMonth={vi.fn()} />)
   await waitFor(() => expect(screen.getByText('11.8')).toBeInTheDocument())
   expect(screen.getByText(/so far/i)).toBeInTheDocument()
   expect(screen.queryByText(/warmest year in/i)).not.toBeInTheDocument()

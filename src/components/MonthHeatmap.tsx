@@ -1,6 +1,7 @@
 import { tempColor } from '../lib/dayStats'
 import { fmtMonth, todayISO } from '../lib/format'
 import type { DailyPoint } from '../types'
+import WeatherGlyph from './WeatherGlyph'
 
 const WD = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
 const TINT: Record<string, string> = { 'text-warm': 'bg-warm/15', 'text-accent': 'bg-accent/15', 'text-fg': 'bg-surface-2' }
@@ -32,20 +33,26 @@ export default function MonthHeatmap({ year, mm, days, normalFor, liveToday, onP
           const stored = byMmdd.get(mmdd) ?? null
           const live = !stored && liveToday?.mmdd === mmdd
           const tmax = stored ? stored.tmax : live ? liveToday!.tmax : null
-          const rec = !!stored && (stored.recHi || stored.recLo)
+          const recHi = !!stored?.recHi
+          const recLo = !!stored?.recLo
+          const recLabel = recHi && recLo ? ', record high and low' : recHi ? ', record high' : recLo ? ', record low' : ''
           const future = iso > todayI
           const tint = !future && tmax != null ? TINT[tempColor(tmax, normalFor(mmdd))] : 'bg-surface-2/40'
           const label = tmax != null
-            ? `${name} ${dnum}, ${year} — high ${tmax.toFixed(1)}°${rec ? ', record' : ''}${live ? ', today' : ''}`
+            ? `${name} ${dnum}, ${year} — high ${tmax.toFixed(1)}°${recLabel}${live ? ', today' : ''}`
             : `${name} ${dnum}, ${year} — no data`
           if (tmax == null || future) { // future days inert even if data leaked in (pipeline strips dates >= today)
             return <div key={dnum} role="gridcell" aria-label={label} className={`min-h-[52px] ${tint}`} />
           }
           return (
             <button key={dnum} type="button" role="gridcell" onClick={() => onPick(iso)} aria-label={`${label}. Open this day`}
-              className={`min-h-[52px] ${tint} p-1 text-left transition-colors hover:ring-1 hover:ring-border`}>
-              <span className="block text-[11px] font-bold text-fg">{dnum}{rec && <span className="ml-0.5 text-warm" aria-hidden>•</span>}</span>
-              <span className="block text-[11px] text-muted">{Math.round(tmax)}°</span>
+              className={`relative min-h-[52px] overflow-hidden ${tint} p-1 text-left transition-colors hover:ring-1 hover:ring-border`}>
+              {/* record days get a hero-style sun (high) / snowflake (low) watermark behind the text */}
+              {(recHi || recLo) && (
+                <WeatherGlyph tone={recHi ? 'warm' : 'cool'} intensity={0.5} className="absolute inset-0 z-0 h-full w-full" />
+              )}
+              <span className="relative z-10 block text-[11px] font-bold text-fg">{dnum}</span>
+              <span className="relative z-10 block text-[11px] text-muted">{Math.round(tmax)}°</span>
             </button>
           )
         })}

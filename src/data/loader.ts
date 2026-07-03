@@ -1,4 +1,4 @@
-import type { Summary, DayNorm, ThisDay, Baseline, MonthData, DailyYear } from '../types'
+import type { Summary, DayNorm, ThisDay, Baseline, MonthData, DailyYear, YearData } from '../types'
 
 export async function loadJSON<T>(path: string): Promise<T> {
   const res = await fetch(`${import.meta.env.BASE_URL}${path}`)
@@ -10,3 +10,4 @@ export const loadDayNorm = () => loadJSON<Record<Baseline, DayNorm[]>>('data/day
 export const loadThisDay = (mmdd: string) => loadJSON<ThisDay>(`data/thisday/${mmdd}.json`)
 export const loadMonth = (mm: string) => loadJSON<MonthData>(`data/month/${mm}.json`)
 export const loadDaily = (year: number) => loadJSON<DailyYear>(`data/daily/${year}.json`)
+export const loadYear = (year: number) => loadJSON<YearData>(`data/year/${year}.json`)

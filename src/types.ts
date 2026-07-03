@@ -34,3 +34,5 @@ export interface MonthData {
 }
 export interface DailyPoint { mmdd: string; tmax: number; tmin: number; provisional?: boolean; recHi?: boolean; recLo?: boolean }
 export type DailyYear = DailyPoint[]
+export interface YearMonth { mm: string; mean: number; normal: number | null; complete: boolean; recHi?: boolean; recLo?: boolean }
+export type YearData = YearMonth[]

@@ -121,11 +121,10 @@ def test_build_emits_daily_files(tmp_path):
 
 
 def test_build_emits_year_files(tmp_path):
-    import os
     recs = (month_recs(2000, 6, 30, 18.0) + month_recs(2020, 6, 30, 20.0))
     build(records=recs, archive={}, recent={}, out_dir=str(tmp_path))
-    p = os.path.join(str(tmp_path), "year", "2020.json")
-    assert os.path.exists(p)
-    data = json.load(open(p))
+    p = tmp_path / "year" / "2020.json"
+    assert p.exists()
+    data = json.loads(p.read_text())
     jun = next(e for e in data if e["mm"] == "06")
     assert jun["mean"] == 20.0 and jun.get("recHi") is True

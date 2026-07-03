@@ -16,12 +16,14 @@ const live = { current:{time:'2026-06-29T12:00',temperature_2m:23.2}, daily:{tim
 const thisday = { mmdd:'0629', recordHigh:{v:32.6,year:1957}, recordLow:{v:5.3,year:1844},
   series:[{year:2024,tmax:25,tmin:14},{year:2026,tmax:26.8,tmin:16}], thenNow:{early:{from:1833,to:1900,mean:18},recent:{from:1996,to:2025,mean:21}} }
 const month = { mm:'06', series:[{year:2025,mean:18,complete:true}], recordWarm:{year:2020,v:21}, recordCold:{year:1923,v:14}, normal:17, thenNow:{early:{from:1833,to:1900,mean:16},recent:{from:1996,to:2025,mean:18}} }
+const yearMonths = [{ mm: '06', mean: 20, normal: 18, complete: true }]
 
 function routeFetch(u: string) {
   if (u.includes('open-meteo')) return live
   if (u.includes('daynorm')) return daynorm
   if (u.includes('summary')) return summary
   if (u.includes('/month/')) return month
+  if (u.includes('/year/')) return yearMonths
   if (u.includes('/daily/')) return []
   return thisday
 }
@@ -78,4 +80,15 @@ it('clamps an out-of-range ?m= month and falls back to the current month-year', 
   // month 13 is invalid → cursor falls back to the current year, not 2019
   expect(await screen.findByRole('radio', { name: 'month' })).toHaveAttribute('aria-checked', 'true')
   expect(screen.queryByText('2019')).not.toBeInTheDocument()
+})
+
+it('tapping a month tile in Year view switches to Month mode', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
+  render(<MemoryRouter><Today /></MemoryRouter>)
+  fireEvent.click(screen.getByRole('radio', { name: /year/i }))
+  const tile = await screen.findByRole('gridcell', { name: /June .*Open this month/i })
+  fireEvent.click(tile)
+  // Tapping the month tile must flip the active mode to Month, not just move the month cursor
+  await waitFor(() => expect(screen.getByRole('radio', { name: /month/i })).toHaveAttribute('aria-checked', 'true'))
+  expect(await screen.findByText(/JUNE/)).toBeInTheDocument()
 })

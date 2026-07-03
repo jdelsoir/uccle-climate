@@ -73,7 +73,7 @@ export default function Today() {
   }
 
   const openDay = (iso: string) => { setDate(midnight(new Date(iso + 'T00:00:00'))); setMode('day') }
-  const openMonth = (y: number, mo: number) => { if (inMonthRange(y, mo)) { setMonthYear(y); setMonth(mo) } }
+  const openMonth = (y: number, mo: number) => { if (inMonthRange(y, mo)) { setMonthYear(y); setMonth(mo); setMode('month') } }
 
   return (
     <section className="fade-in space-y-4">

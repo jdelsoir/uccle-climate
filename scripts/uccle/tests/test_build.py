@@ -118,3 +118,14 @@ def test_build_emits_daily_files(tmp_path):
     assert byd["0625"]["tmax"] == 17.0          # recs_for: tmax = tmean + 5
     assert byd["0625"]["recHi"] is True          # only year present → holds every record
     assert byd["0625"]["recLo"] is True
+
+
+def test_build_emits_year_files(tmp_path):
+    import os
+    recs = (month_recs(2000, 6, 30, 18.0) + month_recs(2020, 6, 30, 20.0))
+    build(records=recs, archive={}, recent={}, out_dir=str(tmp_path))
+    p = os.path.join(str(tmp_path), "year", "2020.json")
+    assert os.path.exists(p)
+    data = json.load(open(p))
+    jun = next(e for e in data if e["mm"] == "06")
+    assert jun["mean"] == 20.0 and jun.get("recHi") is True

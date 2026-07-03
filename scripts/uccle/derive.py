@@ -275,3 +275,29 @@ def daily_data(recs):
             arr.append(e)
         out[f"{y:04d}"] = arr
     return out
+
+def year_data(recs, baseline=(1991, 2020)):
+    md = month_data(recs, baseline)
+    years = set()
+    for payload in md.values():
+        for s in payload["series"]:
+            years.add(s["year"])
+    out = {}
+    for y in sorted(years):
+        months = []
+        for m in range(1, 13):
+            mm = f"{m:02d}"
+            payload = md[mm]
+            s = next((x for x in payload["series"] if x["year"] == y), None)
+            if s is None:
+                continue
+            entry = {"mm": mm, "mean": s["mean"], "normal": payload["normal"], "complete": s["complete"]}
+            if s["complete"]:
+                rw, rc = payload["recordWarm"], payload["recordCold"]
+                if rw and rw["year"] == y:
+                    entry["recHi"] = True
+                if rc and rc["year"] == y:
+                    entry["recLo"] = True
+            months.append(entry)
+        out[f"{y:04d}"] = months
+    return out

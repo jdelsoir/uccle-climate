@@ -225,3 +225,34 @@ def test_month_data_includes_counter_normals():
     # 2000 is in baseline and complete → June counterNormals present
     assert md["06"]["counterNormals"]["SU"] == 30.0
     assert md["06"]["counterNormals"]["hot30"] == 30.0
+
+
+def test_year_data_transpose_and_records():
+    from scripts.uccle.derive import year_data
+    # June: 1990 coldest, 2020 warmest (both complete); 2026 partial (incomplete)
+    recs = (month_recs(1990, 6, 30, 15.0) + month_recs(2000, 6, 30, 18.0)
+            + month_recs(2020, 6, 30, 20.0) + month_recs(2026, 6, 26, 99.0))
+    yd = year_data(recs, baseline=(1990, 2020))
+    assert set(yd.keys()) == {"1990", "2000", "2020", "2026"}
+    # 2020 holds the warmest-June record → recHi on its June entry
+    jun2020 = next(e for e in yd["2020"] if e["mm"] == "06")
+    assert jun2020["mean"] == 20.0 and jun2020["complete"] is True
+    assert jun2020.get("recHi") is True and "recLo" not in jun2020
+    assert jun2020["normal"] == round((15.0 + 18.0 + 20.0) / 3, 2)
+    # 1990 holds the coldest-June record → recLo
+    jun1990 = next(e for e in yd["1990"] if e["mm"] == "06")
+    assert jun1990.get("recLo") is True and "recHi" not in jun1990
+    # 2000 holds no record → no flags
+    jun2000 = next(e for e in yd["2000"] if e["mm"] == "06")
+    assert "recHi" not in jun2000 and "recLo" not in jun2000
+
+def test_year_data_incomplete_month_never_flagged():
+    from scripts.uccle.derive import year_data
+    # 2026 June is the hottest value but partial → must not be a record holder
+    recs = month_recs(2020, 6, 30, 20.0) + month_recs(2026, 6, 26, 99.0)
+    yd = year_data(recs, baseline=(1990, 2020))
+    jun2026 = next(e for e in yd["2026"] if e["mm"] == "06")
+    assert jun2026["complete"] is False
+    assert "recHi" not in jun2026 and "recLo" not in jun2026
+    # the complete 2020 June is the record holder instead
+    assert next(e for e in yd["2020"] if e["mm"] == "06").get("recHi") is True

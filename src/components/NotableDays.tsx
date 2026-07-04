@@ -12,7 +12,7 @@ export default function NotableDays({ warmest, coldest, year, mm, onPick }: {
   const name = fmtMonth(mm)
 
   return (
-    <div className="border border-border bg-surface p-5">
+    <div className="border border-border bg-surface p-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-[11px] uppercase tracking-[0.09em] text-muted">Notable days</p>
         <div role="radiogroup" aria-label="Notable day type" className="inline-flex border border-border text-sm">

@@ -7,7 +7,7 @@ export default function HeroShell({ tone, intensity, children }: {
 }) {
   const grad = tone === 'warm' ? 'from-warm' : tone === 'cool' ? 'from-accent' : ''
   return (
-    <div className="relative overflow-hidden border border-border bg-surface p-5">
+    <div className="relative overflow-hidden border border-border bg-surface p-4">
       {grad && (
         <div aria-hidden
           className={`pointer-events-none absolute inset-0 z-0 bg-gradient-to-l ${grad} to-transparent`}

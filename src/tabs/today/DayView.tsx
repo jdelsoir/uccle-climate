@@ -103,11 +103,11 @@ export default function DayView({ date, min, max, onChange }: { date: Date; min:
     : `Records ${data.recordLow.v}° to ${data.recordHigh.v}°`
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* HERO (capture target) */}
       <div id="day-hero-capture">
         <HeroShell tone={state.tone} intensity={state.intensity}>
-          <div className="flex flex-wrap items-start gap-x-5 gap-y-3">
+          <div className="flex flex-wrap items-start gap-x-5 gap-y-2">
             <CalendarTile header={fmtMonth(mm).toUpperCase()} body={date.getDate()} footer={`${fmtWeekday(date).slice(0, 3).toUpperCase()} · ${year}`}
               onClick={openPicker} ariaLabel={`Change date — ${fullLabel}`} />
             <div className="min-w-0 flex-1">
@@ -156,7 +156,7 @@ export default function DayView({ date, min, max, onChange }: { date: Date; min:
 
       {/* WHERE TODAY SITS — own card (kept out of the hero to avoid the glyph) */}
       {highV != null && (
-        <div className="border border-border bg-surface p-5">
+        <div className="border border-border bg-surface p-4">
           <p className="mb-2 text-[11px] uppercase tracking-[0.09em] text-muted">Where {isReal ? 'today' : 'it'} sits</p>
           <RangeBar
             min={{ v: data.recordLow.v, label: `${data.recordLow.v}° record low` }}
@@ -171,7 +171,7 @@ export default function DayView({ date, min, max, onChange }: { date: Date; min:
       )}
 
       {/* STAT CARDS */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3">
         {normal != null && <StatCard label="Average" value={fmtTemp(normal)} sub="1991–2020 normal" />}
         {delta != null && <StatCard label={isReal ? 'Today vs average' : 'High vs average'} value={`${delta > 0 ? '+' : ''}${delta.toFixed(1)} °C`} sub={deltaWord} valueClass={delta > 0 ? 'text-warm' : delta < 0 ? 'text-accent' : 'text-fg'} />}
         <StatCard label="Record high" value={fmtTemp(data.recordHigh.v)} sub={String(data.recordHigh.year)} valueClass="text-warm" onClick={() => goToYear(data.recordHigh.year)} />

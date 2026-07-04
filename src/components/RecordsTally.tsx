@@ -12,7 +12,7 @@ export default function RecordsTally({ year, days, onPickDay }: {
   const list = warm ? highs : lows
   const accent = warm ? 'text-warm' : 'text-accent'
   return (
-    <div className="border border-border bg-surface p-5">
+    <div className="border border-border bg-surface p-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-[11px] uppercase tracking-[0.09em] text-muted">Daily records set in {year}</p>
         <div role="radiogroup" aria-label="Record type" className="inline-flex border border-border text-sm">

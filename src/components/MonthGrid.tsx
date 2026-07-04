@@ -11,8 +11,8 @@ export default function MonthGrid({ year, months, onPickMonth }: {
 }) {
   const byMm = new Map(months.map(e => [e.mm, e]))
   return (
-    <div className="border border-border bg-surface p-5">
-      <p className="mb-3 text-[11px] uppercase tracking-[0.09em] text-muted">{year} month by month</p>
+    <div className="border border-border bg-surface p-4">
+      <p className="mb-2 text-[11px] uppercase tracking-[0.09em] text-muted">{year} month by month</p>
       <div role="grid" aria-label={`${year} monthly means`} className="grid grid-cols-3 gap-1 text-center">
         {Array.from({ length: 12 }).map((_, i) => {
           const m = i + 1

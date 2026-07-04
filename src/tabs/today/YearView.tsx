@@ -89,10 +89,10 @@ export default function YearView({ year, onPickMonth, onPickDay }: {
   }
 
   return (
-    <div className="space-y-4">
-      <div id="year-capture" className="space-y-4">
+    <div className="space-y-3">
+      <div id="year-capture" className="space-y-3">
         <HeroShell tone={state.tone} intensity={state.intensity}>
-          <div className="flex flex-wrap items-start gap-x-5 gap-y-3">
+          <div className="flex flex-wrap items-start gap-x-5 gap-y-2">
             <CalendarTile header="YEAR" body={year} />
             <div className="min-w-0 flex-1">
               {a ? (
@@ -138,7 +138,7 @@ export default function YearView({ year, onPickMonth, onPickDay }: {
       <YearCounters year={year} counters={summary.counters} incomplete={!yComplete} />
 
       {a && recordWarm && recordCold && (
-        <div className="border border-border bg-surface p-5">
+        <div className="border border-border bg-surface p-4">
           <p className="mb-2 text-[11px] uppercase tracking-[0.09em] text-muted">Where {year} sits</p>
           <RangeBar
             min={{ v: recordCold.mean, label: `${recordCold.mean}° coldest` }}
@@ -151,7 +151,7 @@ export default function YearView({ year, onPickMonth, onPickDay }: {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3">
         {normal != null && <StatCard label="Average" value={fmtTemp(normal)} sub="1991–2020 normal" />}
         {delta != null && <StatCard label="This year vs average" value={`${delta > 0 ? '+' : ''}${delta.toFixed(1)} °C`} sub={deltaWord} valueClass={delta > 0 ? 'text-warm' : delta < 0 ? 'text-accent' : 'text-fg'} />}
         <StatCard label="Warmest year" value={fmtTemp(recordWarm?.mean)} sub={recordWarm ? String(recordWarm.year) : undefined} valueClass="text-warm" />

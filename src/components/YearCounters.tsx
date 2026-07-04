@@ -14,7 +14,7 @@ export default function YearCounters({ year, counters, incomplete }: {
     .filter(r => (r.normal ?? 0) >= 0.5 || r.count > 0)
   if (!rows.length) return null
   return (
-    <div className="border border-border bg-surface p-5">
+    <div className="border border-border bg-surface p-4">
       <p className="mb-2 text-[11px] uppercase tracking-[0.09em] text-muted">This year {incomplete ? 'so far' : 'by the numbers'}</p>
       <ul className="border-t border-border divide-y divide-border">
         {rows.map(({ key, label, Icon, count, normal }) => (

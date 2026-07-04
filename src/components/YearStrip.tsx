@@ -17,8 +17,8 @@ export default function YearStrip({ year, days, normalFor }: {
     return <rect key={d.mmdd} x={i * w} y={0} width={w + 0.3} height={H} fill={fill} />
   })
   return (
-    <div className="border border-border bg-surface p-5">
-      <p className="mb-3 text-[11px] uppercase tracking-[0.09em] text-muted">{year} day by day</p>
+    <div className="border border-border bg-surface p-4">
+      <p className="mb-2 text-[11px] uppercase tracking-[0.09em] text-muted">{year} day by day</p>
       <svg viewBox={`0 0 100 ${H}`} preserveAspectRatio="none" width="100%" height={H} className="block"
         role="img" aria-label={`${year}: ${warm} days warmer, ${cool} days cooler than the 1991–2020 normal`}>
         {rects}

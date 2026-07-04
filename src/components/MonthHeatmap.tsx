@@ -20,8 +20,8 @@ export default function MonthHeatmap({ year, mm, days, normalFor, liveToday, onP
   const name = fmtMonth(mm)
 
   return (
-    <div className="border border-border bg-surface p-5">
-      <p className="mb-3 text-[11px] uppercase tracking-[0.09em] text-muted">{name} {year} day by day</p>
+    <div className="border border-border bg-surface p-4">
+      <p className="mb-2 text-[11px] uppercase tracking-[0.09em] text-muted">{name} {year} day by day</p>
       <div role="grid" aria-label={`${name} ${year} daily highs`} className="grid grid-cols-7 gap-1 text-center">
         {WD.map(w => <div key={w} role="columnheader" className="pb-1 text-[10px] font-medium text-muted">{w}</div>)}
         {Array.from({ length: lead }).map((_, i) => <div key={`b${i}`} aria-hidden />)}

@@ -95,10 +95,10 @@ export default function MonthView({ year, mm, onPickDay, onPickMonth }: { year: 
   }
 
   return (
-    <div className="space-y-4">
-      <div id="month-capture" className="space-y-4">
+    <div className="space-y-3">
+      <div id="month-capture" className="space-y-3">
         <HeroShell tone={state.tone} intensity={state.intensity}>
-          <div className="flex flex-wrap items-start gap-x-5 gap-y-3">
+          <div className="flex flex-wrap items-start gap-x-5 gap-y-2">
             <CalendarTile header={name.toUpperCase()} body={year} onClick={openPicker} ariaLabel={`Change month — ${name} ${year}`} />
             <div className="min-w-0 flex-1">
               {cur ? (
@@ -148,7 +148,7 @@ export default function MonthView({ year, mm, onPickDay, onPickMonth }: { year: 
       )}
 
       {cur && data.recordCold && data.recordWarm && (
-        <div className="border border-border bg-surface p-5">
+        <div className="border border-border bg-surface p-4">
           <p className="mb-2 text-[11px] uppercase tracking-[0.09em] text-muted">Where {year} sits</p>
           <RangeBar
             min={{ v: data.recordCold.v, label: `${data.recordCold.v}° coldest` }}
@@ -163,7 +163,7 @@ export default function MonthView({ year, mm, onPickDay, onPickMonth }: { year: 
 
       <NotableDays warmest={warmest} coldest={coldest} year={year} mm={mm} onPick={onPickDay} />
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3">
         {data.normal != null && <StatCard label="Average" value={fmtTemp(data.normal)} sub="1991–2020 normal" />}
         {delta != null && <StatCard label="This year vs average" value={`${delta > 0 ? '+' : ''}${delta.toFixed(1)} °C`} sub={deltaWord} valueClass={delta > 0 ? 'text-warm' : delta < 0 ? 'text-accent' : 'text-fg'} />}
         <StatCard label={`Warmest ${name}`} value={fmtTemp(data.recordWarm?.v)} sub={data.recordWarm ? String(data.recordWarm.year) : undefined} valueClass="text-warm" />

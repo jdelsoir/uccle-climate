@@ -78,9 +78,9 @@ export default function Today() {
   const openMonth = (y: number, mo: number) => { if (inMonthRange(y, mo)) { setMonthYear(y); setMonth(mo); setMode('month') } }
 
   return (
-    <section className="fade-in space-y-4">
+    <section className="fade-in space-y-3">
       <div className="flex items-start justify-between gap-3">
-        <h2 className="text-2xl font-extrabold tracking-tight">{HEADINGS[mode]}</h2>
+        <h2 className="text-xl font-extrabold tracking-tight sm:text-2xl">{HEADINGS[mode]}</h2>
         <div className="flex items-center gap-2">
           <button type="button" onClick={onToday} disabled={todayDisabled} aria-label="Go to today"
             className="border border-border px-3 py-1 text-xs font-medium text-muted transition-colors hover:text-fg disabled:opacity-40 disabled:hover:text-muted">Today</button>

@@ -57,3 +57,29 @@ export function monthShareUrl(year: number, mm: string): string {
 export function monthShareCaption(sentence: string, year: number, mm: string): string {
   return `${sentence}\n${monthShareUrl(year, mm)}`
 }
+
+export function yearShareSentence({ year, key, rank, total, complete }: {
+  year: number; key: HeroKey; rank: number | null; total: number | null; complete: boolean
+}): string {
+  if (!complete) {
+    switch (key) {
+      case 'record-hot': case 'above': return `${year} so far is running warmer than usual.`
+      case 'record-cold': case 'below': return `${year} so far is running cooler than usual.`
+      default: return `${year} so far is running about average.`
+    }
+  }
+  switch (key) {
+    case 'record-hot': return `${year} was the warmest year on record.`
+    case 'record-cold': return `${year} was the coldest year on record.`
+    case 'above':
+      return rank != null && total != null
+        ? `${year} was the ${ordinal(rank)} warmest year in ${total} years.`
+        : `${year} was warmer than usual.`
+    case 'below': return `${year} was cooler than usual.`
+    case 'close': default: return `${year} was a typical year.`
+  }
+}
+
+// Deep link to a specific year (HashRouter ?y= form — Today.tsx reads the param).
+export function yearShareUrl(year: number): string { return `${APP_URL}#/today?y=${year}` }
+export function yearShareCaption(sentence: string, year: number): string { return `${sentence}\n${yearShareUrl(year)}` }

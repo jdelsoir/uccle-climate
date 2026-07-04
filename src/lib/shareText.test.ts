@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { shareSentence, shareCaption, dayShareUrl, monthShareUrl, monthShareCaption, APP_URL } from './shareText'
+import { shareSentence, shareCaption, dayShareUrl, monthShareUrl, monthShareCaption, APP_URL, yearShareSentence, yearShareUrl, yearShareCaption } from './shareText'
 
 const D = new Date(2026, 5, 29) // Monday June 29 2026
 const base = { date: D, rank: null, firstYear: 1833, prevRecord: null, isToday: true } as const
@@ -66,4 +66,27 @@ describe('month share', () => {
     expect(monthShareCaption('June 2019 was warm.', 2019, '06'))
       .toBe('June 2019 was warm.\nhttps://jdelsoir.github.io/uccle-climate/#/today?m=2019-06')
   })
+})
+
+it('year sentence: warmest year on record', () => {
+  expect(yearShareSentence({ year: 2023, key: 'record-hot', rank: 1, total: 190, complete: true }))
+    .toBe('2023 was the warmest year on record.')
+})
+it('year sentence: nth warmest with rank + total', () => {
+  expect(yearShareSentence({ year: 2020, key: 'above', rank: 3, total: 190, complete: true }))
+    .toBe('2020 was the 3rd warmest year in 190 years.')
+})
+it('year sentence: coldest and typical', () => {
+  expect(yearShareSentence({ year: 1963, key: 'record-cold', rank: null, total: null, complete: true }))
+    .toBe('1963 was the coldest year on record.')
+  expect(yearShareSentence({ year: 1975, key: 'close', rank: 90, total: 190, complete: true }))
+    .toBe('1975 was a typical year.')
+})
+it('year sentence: incomplete year runs "so far"', () => {
+  expect(yearShareSentence({ year: 2026, key: 'above', rank: null, total: null, complete: false }))
+    .toMatch(/^2026 so far/)
+})
+it('year caption appends the ?y= deep link', () => {
+  expect(yearShareUrl(2023)).toMatch(/#\/today\?y=2023$/)
+  expect(yearShareCaption('X.', 2023)).toBe(`X.\n${yearShareUrl(2023)}`)
 })

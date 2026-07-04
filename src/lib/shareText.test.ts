@@ -46,7 +46,7 @@ describe('shareSentence', () => {
 describe('dayShareUrl', () => {
   it('builds a deep link to that day (HashRouter ?d= form)', () => {
     expect(dayShareUrl(new Date(2019, 6, 25)))
-      .toBe('https://jdelsoir.github.io/uccle-climate/#/today?d=2019-07-25')
+      .toBe('https://jdelsoir.github.io/uccle-climate/#/day?d=2019-07-25')
     expect(APP_URL).toBe('https://jdelsoir.github.io/uccle-climate/')
   })
 })
@@ -54,17 +54,17 @@ describe('dayShareUrl', () => {
 describe('shareCaption', () => {
   it('appends the day deep link on a new line', () => {
     expect(shareCaption('X', new Date(2019, 6, 25)))
-      .toBe('X\nhttps://jdelsoir.github.io/uccle-climate/#/today?d=2019-07-25')
+      .toBe('X\nhttps://jdelsoir.github.io/uccle-climate/#/day?d=2019-07-25')
   })
 })
 
 describe('month share', () => {
   it('builds a ?m= deep link', () => {
-    expect(monthShareUrl(2019, '06')).toBe('https://jdelsoir.github.io/uccle-climate/#/today?m=2019-06')
+    expect(monthShareUrl(2019, '06')).toBe('https://jdelsoir.github.io/uccle-climate/#/month?m=2019-06')
   })
   it('appends the deep link to the sentence', () => {
     expect(monthShareCaption('June 2019 was warm.', 2019, '06'))
-      .toBe('June 2019 was warm.\nhttps://jdelsoir.github.io/uccle-climate/#/today?m=2019-06')
+      .toBe('June 2019 was warm.\nhttps://jdelsoir.github.io/uccle-climate/#/month?m=2019-06')
   })
 })
 
@@ -87,6 +87,6 @@ it('year sentence: incomplete year runs "so far"', () => {
     .toMatch(/^2026 so far/)
 })
 it('year caption appends the ?y= deep link', () => {
-  expect(yearShareUrl(2023)).toMatch(/#\/today\?y=2023$/)
+  expect(yearShareUrl(2023)).toMatch(/#\/year\?y=2023$/)
   expect(yearShareCaption('X.', 2023)).toBe(`X.\n${yearShareUrl(2023)}`)
 })

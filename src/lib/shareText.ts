@@ -40,18 +40,18 @@ export function shareSentence({ date, key, rank, firstYear, prevRecord, isToday 
   }
 }
 
-// Deep link to a specific day (HashRouter ?d= form — Today.tsx reads the param).
+// Deep link to a specific day (HashRouter ?d= form on the /day route).
 export function dayShareUrl(date: Date): string {
-  return `${APP_URL}#/today?d=${isoOf(date)}`
+  return `${APP_URL}#/day?d=${isoOf(date)}`
 }
 
 export function shareCaption(sentence: string, date: Date): string {
   return `${sentence}\n${dayShareUrl(date)}`
 }
 
-// Deep link to a specific month (HashRouter ?m= form — Today.tsx reads the param).
+// Deep link to a specific month (HashRouter ?m= form on the /month route).
 export function monthShareUrl(year: number, mm: string): string {
-  return `${APP_URL}#/today?m=${year}-${mm}`
+  return `${APP_URL}#/month?m=${year}-${mm}`
 }
 
 export function monthShareCaption(sentence: string, year: number, mm: string): string {
@@ -80,6 +80,6 @@ export function yearShareSentence({ year, key, rank, total, complete }: {
   }
 }
 
-// Deep link to a specific year (HashRouter ?y= form — Today.tsx reads the param).
-export function yearShareUrl(year: number): string { return `${APP_URL}#/today?y=${year}` }
+// Deep link to a specific year (HashRouter ?y= form on the /year route).
+export function yearShareUrl(year: number): string { return `${APP_URL}#/year?y=${year}` }
 export function yearShareCaption(sentence: string, year: number): string { return `${sentence}\n${yearShareUrl(year)}` }

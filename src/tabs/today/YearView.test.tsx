@@ -137,5 +137,6 @@ test('daily-data rendering: YearStrip and RecordsTally use real Array daily data
   expect(screen.getByRole('radio', { name: /1 highs/i })).toBeInTheDocument()
   expect(screen.getByText('Daily records set in 2023')).toBeInTheDocument()
 
-  expect(document.getElementById('year-capture')!.querySelector('svg')).toBeTruthy()
+  // the barcode strip (only source of <rect> here) must sit inside the share-capture region
+  expect(document.getElementById('year-capture')!.querySelector('rect')).toBeTruthy()
 })

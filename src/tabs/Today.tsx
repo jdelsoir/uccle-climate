@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import DayView from './today/DayView'
 import MonthView from './today/MonthView'
@@ -8,15 +8,15 @@ import { useSummary } from '../data/useSummary'
 import { isoOf } from '../lib/format'
 
 type Mode = 'day' | 'month' | 'year'
-const MODES: Mode[] = ['day', 'month', 'year']
 const HEADINGS: Record<Mode, string> = { day: 'This Day in History', month: 'This Month in History', year: 'This Year in History' }
 const NOUN: Record<Mode, string> = { day: 'day', month: 'month', year: 'year' }
 const MIN_DATE = new Date(1833, 0, 1)
 const midnight = (d: Date) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x }
 
-export default function Today() {
+export default function Today({ mode }: { mode: Mode }) {
   const { summary } = useSummary()
   const now = new Date()
+  const navigate = useNavigate()
   const [params] = useSearchParams()
   const dParam = params.get('d')
   const mParam = params.get('m')
@@ -25,7 +25,6 @@ export default function Today() {
   const yParam = params.get('y')
   const yValid = !!yParam && /^\d{4}$/.test(yParam)
 
-  const [mode, setMode] = useState<Mode>(() => (dValid ? 'day' : mMatch ? 'month' : yValid ? 'year' : 'day'))
   const [date, setDate] = useState<Date>(() => {
     if (dValid) {
       const parsed = midnight(new Date(dParam + 'T00:00:00'))
@@ -74,8 +73,8 @@ export default function Today() {
     onToday = () => setYear(now.getFullYear()); todayDisabled = selYear === maxYear
   }
 
-  const openDay = (iso: string) => { setDate(midnight(new Date(iso + 'T00:00:00'))); setMode('day') }
-  const openMonth = (y: number, mo: number) => { if (inMonthRange(y, mo)) { setMonthYear(y); setMonth(mo); setMode('month') } }
+  const openDay = (iso: string) => navigate(`/day?d=${iso}`)
+  const openMonth = (y: number, mo: number) => { if (inMonthRange(y, mo)) navigate(`/month?m=${y}-${String(mo).padStart(2, '0')}`) }
 
   return (
     <section className="fade-in space-y-3">
@@ -89,13 +88,6 @@ export default function Today() {
           <button type="button" onClick={onNext} disabled={nextDisabled} aria-label={`Next ${NOUN[mode]}`}
             className="grid h-9 w-9 place-items-center border border-border text-muted transition-colors hover:text-fg disabled:opacity-40"><ChevronRight size={18} aria-hidden /></button>
         </div>
-      </div>
-
-      <div role="radiogroup" aria-label="Granularity" className="flex gap-6 border-b border-border">
-        {MODES.map(m => (
-          <button key={m} type="button" role="radio" aria-checked={mode === m} onClick={() => setMode(m)}
-            className={`-mb-px border-b-2 pb-2 text-sm capitalize transition-colors ${mode === m ? 'border-warm font-semibold text-fg' : 'border-transparent text-muted hover:text-fg'}`}>{m}</button>
-        ))}
       </div>
 
       {mode === 'day' && <DayView date={date} min={MIN_DATE} max={maxDate} onChange={setDate} />}

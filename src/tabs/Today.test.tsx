@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { vi } from 'vitest'
 import Today from './Today'
 
@@ -27,75 +27,67 @@ function routeFetch(u: string) {
   if (u.includes('/daily/')) return []
   return thisday
 }
+beforeEach(() => vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) }))))
 afterEach(() => vi.unstubAllGlobals())
 
-test('underline tabs switch mode; day is default', async () => {
-  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
-  render(<MemoryRouter><Today /></MemoryRouter>)
-  expect(screen.getByRole('radio', { name: /day/i })).toHaveAttribute('aria-checked', 'true')
-  fireEvent.click(screen.getByRole('radio', { name: /year/i }))
-  await waitFor(() => expect(screen.getByRole('radio', { name: /year/i })).toHaveAttribute('aria-checked', 'true'))
-})
+// Mounts the three view routes so cross-mode navigate() lands. Each element carries a
+// mode-keyed `key` — React Router does not remount a route's element just because the
+// matched path changed if the element type is unchanged (all three routes render the
+// same `Today` component); without distinct keys, navigating day->month->year would
+// reuse the previous instance's cursor state instead of re-deriving it from the new
+// route's own ?d=/?m=/?y= params.
+const app = (initial: string) => render(
+  <MemoryRouter initialEntries={[initial]}>
+    <Routes>
+      <Route path="/day" element={<Today mode="day" key="day" />} />
+      <Route path="/month" element={<Today mode="month" key="month" />} />
+      <Route path="/year" element={<Today mode="year" key="year" />} />
+    </Routes>
+  </MemoryRouter>
+)
 
-test('header Previous steps the active unit (day) and Today is disabled on today', async () => {
-  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
-  const { container } = render(<MemoryRouter><Today /></MemoryRouter>)
+test('/day renders the Day view with a date picker, default cursor is today', async () => {
+  const { container } = app('/day')
   await waitFor(() => expect(container.querySelector('input[type="date"]')).toBeTruthy())
-  expect(screen.getByRole('button', { name: /go to today/i })).toBeDisabled()  // cursor starts at today
-  fireEvent.click(screen.getByRole('button', { name: /^previous/i }))
-  expect(screen.getByRole('button', { name: /go to today/i })).not.toBeDisabled()  // moved off today
+  expect(screen.getByRole('heading', { name: /this day in history/i })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /go to today/i })).toBeDisabled()   // starts on today
 })
 
-test('deep-links to a specific day via ?d= query param', async () => {
-  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
-  render(
-    <MemoryRouter initialEntries={['/today?d=2019-07-25']}>
-      <Today />
-    </MemoryRouter>
-  )
-  // Day is the default mode; the cursor must be 25 Jul 2019, not today (29 Jun 2026)
+test('the ◀ stepper moves the day off today (Today button re-enables)', async () => {
+  const { container } = app('/day')
+  await waitFor(() => expect(container.querySelector('input[type="date"]')).toBeTruthy())
+  fireEvent.click(screen.getByRole('button', { name: /^previous/i }))
+  expect(screen.getByRole('button', { name: /go to today/i })).not.toBeDisabled()
+})
+
+test('/day?d= deep-links to that day', async () => {
+  app('/day?d=2019-07-25')
   expect(await screen.findByText('JULY')).toBeInTheDocument()
   expect(screen.getByText('25')).toBeInTheDocument()
 })
 
-it('opens Month mode at the month-year from ?m=', async () => {
-  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
-  render(<MemoryRouter initialEntries={['/today?m=2019-06']}><Today /></MemoryRouter>)
-  // Month-mode radio is selected and the month heading shows
-  expect(await screen.findByRole('radio', { name: 'month' })).toHaveAttribute('aria-checked', 'true')
-  // MonthView renders the CalendarTile header for the deep-linked month/year
+test('/month?m= opens that month-year', async () => {
+  app('/month?m=2019-06')
   expect(await screen.findByText(/JUNE/)).toBeInTheDocument()
   expect(await screen.findByText('2019')).toBeInTheDocument()
 })
 
-it('lets ?d= win when both ?d and ?m are present', async () => {
-  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
-  render(<MemoryRouter initialEntries={['/today?d=2010-03-04&m=2019-06']}><Today /></MemoryRouter>)
-  expect(await screen.findByRole('radio', { name: 'day' })).toHaveAttribute('aria-checked', 'true')
-})
-
-it('clamps an out-of-range ?m= month and falls back to the current month-year', async () => {
-  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
-  render(<MemoryRouter initialEntries={['/today?m=2019-13']}><Today /></MemoryRouter>)
-  // month 13 is invalid → cursor falls back to the current year, not 2019
-  expect(await screen.findByRole('radio', { name: 'month' })).toHaveAttribute('aria-checked', 'true')
+test('/month?m= with an out-of-range month falls back to the current month', async () => {
+  app('/month?m=2019-13')
+  expect(await screen.findByText(/this month in history/i)).toBeInTheDocument()
   expect(screen.queryByText('2019')).not.toBeInTheDocument()
 })
 
-test('?y= deep link cold-opens Year mode at that year', async () => {
-  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
-  render(<MemoryRouter initialEntries={['/today?y=2015']}><Today /></MemoryRouter>)
-  await waitFor(() => expect(screen.getByRole('radio', { name: /year/i })).toHaveAttribute('aria-checked', 'true'))
+test('/year?y= opens that year', async () => {
+  app('/year?y=2015')
   expect(await screen.findByText('2015')).toBeInTheDocument()
 })
 
-it('tapping a month tile in Year view switches to Month mode', async () => {
-  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
-  render(<MemoryRouter><Today /></MemoryRouter>)
-  fireEvent.click(screen.getByRole('radio', { name: /year/i }))
+test('tapping a month tile in Year view navigates to the Month view', async () => {
+  app('/year')
   const tile = await screen.findByRole('gridcell', { name: /June .*Open this month/i })
   fireEvent.click(tile)
-  // Tapping the month tile must flip the active mode to Month, not just move the month cursor
-  await waitFor(() => expect(screen.getByRole('radio', { name: /month/i })).toHaveAttribute('aria-checked', 'true'))
+  // navigate('/month?m=2023-06') → Month route renders MonthView (CalendarTile shows JUNE)
+  expect(await screen.findByText(/this month in history/i)).toBeInTheDocument()
   expect(await screen.findByText(/JUNE/)).toBeInTheDocument()
 })

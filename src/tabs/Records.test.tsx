@@ -43,7 +43,7 @@ test('Warmest is selected by default with a solid red fill', async () => {
 test('rows are links to the Day view for that date, with warm accent', async () => {
   stub(); renderRecords()
   const link = await screen.findByRole('link', { name: /25 Jun 1947/i })
-  expect(link).toHaveAttribute('href', '/today?d=1947-06-25')
+  expect(link).toHaveAttribute('href', '/day?d=1947-06-25')
   expect(link.querySelector('.text-warm')).toBeTruthy()
 })
 
@@ -56,7 +56,7 @@ test('toggling to Coldest swaps data, accent to blue, and shows a solid blue fil
   expect(coldBtn.className).toContain('bg-accent')
   expect(coldBtn.className).toContain('text-white')
   const link = screen.getByRole('link', { name: /26 Jan 1942/i })
-  expect(link).toHaveAttribute('href', '/today?d=1942-01-26')
+  expect(link).toHaveAttribute('href', '/day?d=1942-01-26')
   expect(link.querySelector('.text-accent')).toBeTruthy()
   expect(screen.queryByRole('link', { name: /25 Jun 1947/i })).not.toBeInTheDocument()
 })

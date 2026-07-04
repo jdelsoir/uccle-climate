@@ -46,7 +46,7 @@ export default function Records() {
           {list.map((rec, i) => (
             <li key={rec.date}>
               <Link
-                to={`/today?d=${rec.date}`}
+                to={`/day?d=${rec.date}`}
                 aria-label={`${fmtDate(rec.date)} — ${fmtTemp(rec.v)}, rank ${i + 1}. Open this day`}
                 className="flex items-center gap-3 py-3 transition-colors hover:bg-surface-2"
               >

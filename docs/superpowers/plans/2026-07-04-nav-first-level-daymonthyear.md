@@ -326,9 +326,9 @@ export default function App() {
         <Nav />
         <main id="main" className="mx-auto max-w-[680px] px-4 pb-28 pt-4 lg:pb-12">
           <Routes>
-            <Route path="/day" element={<Today mode="day" />} />
-            <Route path="/month" element={<Today mode="month" />} />
-            <Route path="/year" element={<Today mode="year" />} />
+            <Route path="/day" element={<Today key="day" mode="day" />} />
+            <Route path="/month" element={<Today key="month" mode="month" />} />
+            <Route path="/year" element={<Today key="year" mode="year" />} />
             <Route path="/records" element={<Records />} />
             <Route path="/about" element={<About />} />
             <Route path="*" element={<Navigate to="/day" replace />} />
@@ -340,6 +340,8 @@ export default function App() {
 }
 ```
 (Trends/Climate/Me imports + routes removed; `/today` removed; default → `/day`.)
+
+> **CRITICAL — the per-mode `key` props are required, not cosmetic.** All three routes render the same `Today` component type at the same tree position; React Router v6 does NOT remount on a path change between same-type sibling routes, so `Today`'s `useState` cursor initializers would not re-read the new route's `?d/?m/?y` param — a cross-mode jump (Year tile→`/month?m=…`, heatmap→`/day?d=…`, Records row→`/day?d=…`) would land on the current period instead of the tapped one. The distinct `key="day"/"month"/"year"` forces a remount so the initializer runs. (Confirmed in Task 2 by reading react-router source; the Task 2 test harness already keys its routes.) Do not omit them.
 
 - [ ] **Step 2: Rewrite the `tabs` array in `src/components/Nav.tsx`:**
 

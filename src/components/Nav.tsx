@@ -1,13 +1,12 @@
 import { NavLink } from 'react-router-dom'
-import { Sun, TrendingUp, Trophy, Thermometer, User, Info } from 'lucide-react'
+import { Sun, CalendarDays, CalendarRange, Trophy, Info } from 'lucide-react'
 
 const tabs = [
-  { to: '/today', label: 'Today', Icon: Sun },
-  { to: '/trends', label: 'Trends', Icon: TrendingUp },
+  { to: '/day',     label: 'Day',     Icon: Sun },
+  { to: '/month',   label: 'Month',   Icon: CalendarDays },
+  { to: '/year',    label: 'Year',    Icon: CalendarRange },
   { to: '/records', label: 'Records', Icon: Trophy },
-  { to: '/climate', label: 'Climate', Icon: Thermometer },
-  { to: '/me', label: 'Me', Icon: User },
-  { to: '/about', label: 'About', Icon: Info },
+  { to: '/about',   label: 'About',   Icon: Info },
 ]
 
 export default function Nav() {

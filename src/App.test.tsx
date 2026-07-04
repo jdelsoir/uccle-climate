@@ -16,10 +16,13 @@ vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) =>
           series:[{year:1900,tmax:24,tmin:12},{year:2020,tmax:33,tmin:20}],
           thenNow:{early:{from:1833,to:1900,mean:18},recent:{from:1996,to:2025,mean:21}} } })))
 
-test('renders Today tab by default and nav links', async () => {
+test('renders the Day tab by default with the five nav links', async () => {
   render(<App />)
   await waitFor(() => expect(screen.getByRole('heading', { name: /this day in history/i })).toBeInTheDocument())
-  expect(screen.getByRole('link', { name: /trends/i })).toBeInTheDocument()
+  for (const name of [/^day$/i, /^month$/i, /^year$/i, /^records$/i, /^about$/i]) {
+    expect(screen.getByRole('link', { name })).toBeInTheDocument()
+  }
+  expect(screen.queryByRole('link', { name: /trends|climate|^me$/i })).toBeNull()
 })
 
 afterEach(() => vi.unstubAllGlobals())

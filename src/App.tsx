@@ -2,10 +2,7 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Header from './components/Header'
 import Nav from './components/Nav'
 import Today from './tabs/Today'
-import Trends from './tabs/Trends'
 import Records from './tabs/Records'
-import Climate from './tabs/Climate'
-import Me from './tabs/Me'
 import About from './tabs/About'
 
 export default function App() {
@@ -17,13 +14,12 @@ export default function App() {
         <Nav />
         <main id="main" className="mx-auto max-w-[680px] px-4 pb-28 pt-4 lg:pb-12">
           <Routes>
-            <Route path="/today" element={<Today />} />
-            <Route path="/trends" element={<Trends />} />
+            <Route path="/day" element={<Today key="day" mode="day" />} />
+            <Route path="/month" element={<Today key="month" mode="month" />} />
+            <Route path="/year" element={<Today key="year" mode="year" />} />
             <Route path="/records" element={<Records />} />
-            <Route path="/climate" element={<Climate />} />
-            <Route path="/me" element={<Me />} />
             <Route path="/about" element={<About />} />
-            <Route path="*" element={<Navigate to="/today" replace />} />
+            <Route path="*" element={<Navigate to="/day" replace />} />
           </Routes>
         </main>
       </div>

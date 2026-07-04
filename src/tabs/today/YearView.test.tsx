@@ -1,9 +1,11 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { vi } from 'vitest'
 import YearView from './YearView'
 
 vi.mock('recharts', async (o) => { const a = await o<typeof import('recharts')>()
   return { ...a, ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div style={{ width: 800, height: 300 }}>{children}</div> } })
+vi.mock('../../lib/share', () => ({ shareNode: vi.fn().mockResolvedValue(undefined) }))
+import { shareNode } from '../../lib/share'
 
 const annual = [
   { year: 1920, mean: 9.5, tmin: 5, tmax: 14, incomplete: false },
@@ -100,4 +102,40 @@ it('keeps the "(so far)"/neutral treatment and suppresses record/rank for an inc
   renderYear({ a: { year: 2026, mean: 11, incomplete: true }, normal: 10, recordWarm: { year: 2026, mean: 11 } })
   expect(await screen.findByText(/so far/i)).toBeTruthy()
   expect(screen.queryByText(/on record/i)).toBeNull()
+})
+
+it('shares the year via the discreet Share button', async () => {
+  renderYear({ a: { year: 2025, mean: 12.5, incomplete: false }, normal: 10, rank: 4, total: 180 })
+  const btn = await screen.findByRole('button', { name: /share this year/i })
+  fireEvent.click(btn)
+  await waitFor(() => expect(shareNode).toHaveBeenCalled())
+  const call = (shareNode as unknown as { mock: { calls: unknown[][] } }).mock.calls[0]
+  expect(call[1]).toBe('uccle-year.png')
+  expect((call[2] as { text: string }).text).toMatch(/\?y=2025/)
+})
+
+test('daily-data rendering: YearStrip and RecordsTally use real Array daily data', async () => {
+  const days = [
+    { mmdd: '0715', tmax: 36, tmin: 20, recHi: true },
+    { mmdd: '0101', tmax: 5, tmin: 1 },
+  ]
+  const yearMonths = [{ mm: '07', mean: 23, normal: 18, complete: true }]
+  const dailyDayNorm = { '1991-2020': [{ doy: 196, mmdd: '0715', normal: 24, p10: 18, p90: 30 }], '1961-1990': [] }
+  function routeFetch(u: string) {
+    if (u.includes('/daily/')) return days
+    if (u.includes('/year/')) return yearMonths
+    if (u.includes('daynorm')) return dailyDayNorm
+    if (u.includes('summary')) return summary
+    return summary
+  }
+  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
+  const { container } = render(<YearView year={2023} onPickMonth={vi.fn()} onPickDay={vi.fn()} />)
+
+  await waitFor(() => expect(container.querySelectorAll('rect').length).toBeGreaterThan(0))
+  expect(screen.getByText(/day by day/i)).toBeInTheDocument()
+
+  expect(screen.getByRole('radio', { name: /1 highs/i })).toBeInTheDocument()
+  expect(screen.getByText('Daily records set in 2023')).toBeInTheDocument()
+
+  expect(document.getElementById('year-capture')!.querySelector('svg')).toBeTruthy()
 })

@@ -1,20 +1,11 @@
-import { Sun, Flame, MoonStar, Snowflake, ThermometerSnowflake } from 'lucide-react'
+import { COUNTER_ROWS, type CounterKey } from '../lib/counterRows'
 
-type Key = 'SU' | 'hot30' | 'TR' | 'FD' | 'ID'
-type Counts = Record<Key, number>
-
-const ROWS: { key: Key; label: string; Icon: typeof Sun }[] = [
-  { key: 'SU', label: 'summer days', Icon: Sun },
-  { key: 'hot30', label: 'hot days', Icon: Flame },
-  { key: 'TR', label: 'tropical nights', Icon: MoonStar },
-  { key: 'FD', label: 'frost days', Icon: Snowflake },
-  { key: 'ID', label: 'ice days', Icon: ThermometerSnowflake },
-]
+type Counts = Record<CounterKey, number>
 
 export default function MonthCounters({ name, counts, normals, soFar }: {
   name: string; counts: Counts; normals: Counts | null; soFar: boolean
 }) {
-  const shown = ROWS.filter(r => (normals?.[r.key] ?? 0) >= 0.5 || counts[r.key] > 0)
+  const shown = COUNTER_ROWS.filter(r => (normals?.[r.key] ?? 0) >= 0.5 || counts[r.key] > 0)
   if (!shown.length) return null
   return (
     <div className="border border-border bg-surface p-5">

@@ -82,6 +82,13 @@ it('clamps an out-of-range ?m= month and falls back to the current month-year', 
   expect(screen.queryByText('2019')).not.toBeInTheDocument()
 })
 
+test('?y= deep link cold-opens Year mode at that year', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
+  render(<MemoryRouter initialEntries={['/today?y=2015']}><Today /></MemoryRouter>)
+  await waitFor(() => expect(screen.getByRole('radio', { name: /year/i })).toHaveAttribute('aria-checked', 'true'))
+  expect(await screen.findByText('2015')).toBeInTheDocument()
+})
+
 it('tapping a month tile in Year view switches to Month mode', async () => {
   vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
   render(<MemoryRouter><Today /></MemoryRouter>)

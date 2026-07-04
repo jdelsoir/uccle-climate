@@ -22,8 +22,10 @@ export default function Today() {
   const mParam = params.get('m')
   const dValid = !!dParam && /^\d{4}-\d{2}-\d{2}$/.test(dParam)
   const mMatch = mParam && /^(\d{4})-(\d{2})$/.exec(mParam)
+  const yParam = params.get('y')
+  const yValid = !!yParam && /^\d{4}$/.test(yParam)
 
-  const [mode, setMode] = useState<Mode>(() => (dValid ? 'day' : mMatch ? 'month' : 'day'))
+  const [mode, setMode] = useState<Mode>(() => (dValid ? 'day' : mMatch ? 'month' : yValid ? 'year' : 'day'))
   const [date, setDate] = useState<Date>(() => {
     if (dValid) {
       const parsed = midnight(new Date(dParam + 'T00:00:00'))
@@ -36,7 +38,7 @@ export default function Today() {
     mo >= 1 && mo <= 12 && y >= 1833 && (y < now.getFullYear() || (y === now.getFullYear() && mo <= now.getMonth() + 1))
   const [month, setMonth] = useState(() => (mMatch && inMonthRange(+mMatch[1], +mMatch[2]) ? +mMatch[2] : now.getMonth() + 1))
   const [monthYear, setMonthYear] = useState(() => (mMatch && inMonthRange(+mMatch[1], +mMatch[2]) ? +mMatch[1] : now.getFullYear()))
-  const [year, setYear] = useState<number | null>(null)
+  const [year, setYear] = useState<number | null>(() => (yValid ? Math.min(now.getFullYear(), Math.max(1833, +yParam!)) : null))
 
   const years = summary?.annual?.map(a => a.year) ?? []
   const minYear = years.length ? Math.min(...years) : 1833
@@ -98,7 +100,7 @@ export default function Today() {
 
       {mode === 'day' && <DayView date={date} min={MIN_DATE} max={maxDate} onChange={setDate} />}
       {mode === 'month' && <MonthView year={monthYear} mm={mm} onPickDay={openDay} onPickMonth={openMonth} />}
-      {mode === 'year' && <YearView year={selYear} onPickMonth={openMonth} />}
+      {mode === 'year' && <YearView year={selYear} onPickMonth={openMonth} onPickDay={openDay} />}
     </section>
   )
 }

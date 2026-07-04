@@ -1,5 +1,8 @@
+import { useRef, useState } from 'react'
 import { useSummary } from '../../data/useSummary'
 import { useYear } from '../../data/useYear'
+import { useDaily } from '../../data/useDaily'
+import { useDayNorm } from '../../data/useDayNorm'
 import { fmtTemp, ordinal } from '../../lib/format'
 import { Loading, ErrorState } from '../../components/States'
 import CalendarTile from '../../components/CalendarTile'
@@ -10,7 +13,13 @@ import WarmingStrip from '../../components/WarmingStrip'
 import PeriodScatter from '../../components/PeriodScatter'
 import HeroShell from '../../components/HeroShell'
 import MonthGrid from '../../components/MonthGrid'
+import YearStrip from '../../components/YearStrip'
+import RecordsTally from '../../components/RecordsTally'
+import YearCounters from '../../components/YearCounters'
 import { heroState, deltaLine, bannerClass, toneText } from '../../lib/heroState'
+import { shareNode } from '../../lib/share'
+import { yearShareSentence, yearShareCaption } from '../../lib/shareText'
+import { Share2 } from 'lucide-react'
 
 type Annual = { year: number; mean: number; incomplete: boolean }
 function yearWindowMean(annual: Annual[], from: number, to: number): number | null {
@@ -18,9 +27,17 @@ function yearWindowMean(annual: Annual[], from: number, to: number): number | nu
   return v.length ? Math.round((v.reduce((s, x) => s + x, 0) / v.length) * 10) / 10 : null
 }
 
-export default function YearView({ year, onPickMonth }: { year: number; onPickMonth: (year: number, month: number) => void }) {
+export default function YearView({ year, onPickMonth, onPickDay }: {
+  year: number
+  onPickMonth: (year: number, month: number) => void
+  onPickDay: (iso: string) => void
+}) {
   const { summary, loading, error } = useSummary()
   const { data: yearMonths } = useYear(year)
+  const daily = useDaily(year)
+  const dayNorm = useDayNorm()
+  const [capturing, setCapturing] = useState(false)
+  const busy = useRef(false)
   if (loading) return <Loading label="Loading year…" />
   if (error || !summary) return <ErrorState label="Could not load data." />
 
@@ -55,31 +72,70 @@ export default function YearView({ year, onPickMonth }: { year: number; onPickMo
   const recentMean = yearWindowMean(summary.annual, recentFrom, recentTo)
   const thenMean = yearWindowMean(summary.annual, thenFrom, thenTo)
 
+  const normMap = new Map((dayNorm.data?.['1991-2020'] ?? []).map(n => [n.mmdd, n.normal]))
+  const normalFor = (mmdd: string) => normMap.get(mmdd) ?? null
+  const days = Array.isArray(daily.data) ? daily.data : []
+
+  const handleShare = async () => {
+    if (busy.current) return
+    busy.current = true; setCapturing(true)
+    try {
+      await new Promise<void>(res => requestAnimationFrame(() => requestAnimationFrame(() => res())))
+      const node = document.getElementById('year-capture')
+      if (node && a) await shareNode(node, 'uccle-year.png', {
+        text: yearShareCaption(yearShareSentence({ year, key: state.key, rank, total, complete: yComplete }), year),
+      })
+    } finally { setCapturing(false); busy.current = false }
+  }
+
   return (
     <div className="space-y-4">
-      <HeroShell tone={state.tone} intensity={state.intensity}>
-        <div className="flex flex-wrap items-start gap-x-5 gap-y-3">
-          <CalendarTile header="YEAR" body={year} />
-          <div className="min-w-0 flex-1">
-            {a ? (
-              <>
-                <p className="text-[11px] uppercase tracking-[0.09em] text-muted">{state.word}</p>
-                <div><BigTemp v={a.mean} className={`text-[40px] ${toneText(state.tone)}`} /></div>
-                {dl && <p className="mt-1 text-sm text-muted">{dl}</p>}
-              </>
-            ) : <p className="text-sm text-muted">No data for {year} yet.</p>}
+      <div id="year-capture" className="space-y-4">
+        <HeroShell tone={state.tone} intensity={state.intensity}>
+          <div className="flex flex-wrap items-start gap-x-5 gap-y-3">
+            <CalendarTile header="YEAR" body={year} />
+            <div className="min-w-0 flex-1">
+              {a ? (
+                <>
+                  <p className="text-[11px] uppercase tracking-[0.09em] text-muted">{state.word}</p>
+                  <div><BigTemp v={a.mean} className={`text-[40px] ${toneText(state.tone)}`} /></div>
+                  {dl && <p className="mt-1 text-sm text-muted">{dl}</p>}
+                </>
+              ) : <p className="text-sm text-muted">No data for {year} yet.</p>}
+            </div>
           </div>
-        </div>
-        {banner && (
-          <div className="mt-3">
-            <span className={`inline-block px-2.5 py-1 text-xs font-semibold ${bannerClass(bannerKey)}`}>{banner}</span>
+          {banner && (
+            <div className="mt-3">
+              <span className={`inline-block px-2.5 py-1 text-xs font-semibold ${bannerClass(bannerKey)}`}>{banner}</span>
+            </div>
+          )}
+        </HeroShell>
+
+        {Array.isArray(daily.data) && dayNorm.data && <YearStrip year={year} days={days} normalFor={normalFor} />}
+
+        {capturing && (
+          <div className="border border-border bg-surface px-5 py-3 text-[11px] text-muted">
+            <p>Uccle, Brussels · jdelsoir.github.io/uccle-climate</p>
           </div>
         )}
-      </HeroShell>
+      </div>
+
+      {a && (
+        <div className="flex justify-end">
+          <button type="button" aria-label="Share this year" disabled={capturing} onClick={handleShare}
+            className="inline-flex items-center gap-1.5 px-2 py-1 text-xs text-muted transition-colors hover:text-fg disabled:opacity-40">
+            <Share2 size={14} aria-hidden /> Share
+          </button>
+        </div>
+      )}
 
       {Array.isArray(yearMonths) && yearMonths.length > 0 && (
         <MonthGrid year={year} months={yearMonths} onPickMonth={onPickMonth} />
       )}
+
+      {Array.isArray(daily.data) && <RecordsTally year={year} days={days} onPickDay={onPickDay} />}
+
+      <YearCounters year={year} counters={summary.counters} incomplete={!yComplete} />
 
       {a && recordWarm && recordCold && (
         <div className="border border-border bg-surface p-5">

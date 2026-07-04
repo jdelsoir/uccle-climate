@@ -87,7 +87,19 @@ test('tapping a month tile in Year view navigates to the Month view', async () =
   app('/year')
   const tile = await screen.findByRole('gridcell', { name: /June .*Open this month/i })
   fireEvent.click(tile)
-  // navigate('/month?m=2023-06') → Month route renders MonthView (CalendarTile shows JUNE)
+  // navigate('/month?m=2025-06') → Month route renders MonthView (CalendarTile shows JUNE)
   expect(await screen.findByText(/this month in history/i)).toBeInTheDocument()
   expect(await screen.findByText(/JUNE/)).toBeInTheDocument()
+})
+
+test("Month view's own month picker moves the cursor without navigating routes", async () => {
+  const { container } = app('/month?m=2019-06')
+  expect(await screen.findByRole('button', { name: /Change month — June 2019/i })).toBeInTheDocument()
+
+  const input = container.querySelector('input[type="month"]') as HTMLInputElement
+  expect(input).toBeTruthy()
+  fireEvent.change(input, { target: { value: '2020-03' } })
+
+  expect(await screen.findByRole('button', { name: /Change month — March 2020/i })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /Change month — June 2019/i })).not.toBeInTheDocument()
 })

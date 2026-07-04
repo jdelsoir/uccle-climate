@@ -74,7 +74,8 @@ export default function Today({ mode }: { mode: Mode }) {
   }
 
   const openDay = (iso: string) => navigate(`/day?d=${iso}`)
-  const openMonth = (y: number, mo: number) => { if (inMonthRange(y, mo)) navigate(`/month?m=${y}-${String(mo).padStart(2, '0')}`) }
+  const openMonth = (y: number, mo: number) => { if (inMonthRange(y, mo)) navigate(`/month?m=${y}-${String(mo).padStart(2, '0')}`) } // cross-mode (Year→Month)
+  const pickMonth = (y: number, mo: number) => { if (inMonthRange(y, mo)) { setMonthYear(y); setMonth(mo) } } // within-mode (Month's own picker)
 
   return (
     <section className="fade-in space-y-3">
@@ -91,7 +92,7 @@ export default function Today({ mode }: { mode: Mode }) {
       </div>
 
       {mode === 'day' && <DayView date={date} min={MIN_DATE} max={maxDate} onChange={setDate} />}
-      {mode === 'month' && <MonthView year={monthYear} mm={mm} onPickDay={openDay} onPickMonth={openMonth} />}
+      {mode === 'month' && <MonthView year={monthYear} mm={mm} onPickDay={openDay} onPickMonth={pickMonth} />}
       {mode === 'year' && <YearView year={selYear} onPickMonth={openMonth} onPickDay={openDay} />}
     </section>
   )

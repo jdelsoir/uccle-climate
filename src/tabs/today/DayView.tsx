@@ -191,7 +191,7 @@ export default function DayView({ date, min, max, onChange }: { date: Date; min:
         onChange={e => { if (e.target.value) onChange(new Date(clampIso(e.target.value) + 'T00:00:00')) }} />
 
       <PeriodScatter title="Every year on this date" data={data.series}
-        series={[{ key: 'tmax', name: 'High', color: 'var(--warm)' }, { key: 'tmin', name: 'Low', color: 'var(--accent)' }]} />
+        series={[{ key: 'tmax', name: 'High', color: 'var(--warm)' }, { key: 'tmin', name: 'Low', color: 'var(--accent)' }]} trendKey="tmax" />
     </div>
   )
 }

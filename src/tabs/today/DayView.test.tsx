@@ -78,6 +78,7 @@ test('today: range bar + stat cards (average, vs average, record high/low) + war
   expect(screen.getByText('Record low')).toBeInTheDocument()
   expect(screen.getByText('5.3 °C')).toBeInTheDocument()
   expect(screen.getByText(/A warming/)).toBeInTheDocument()                // warming strip
+  expect(screen.getByText(/trend · shown period/)).toBeInTheDocument()     // OLS trend line legend on the day scatter
 })
 
 test('today: live fetch error shows "Live temperature unavailable."', async () => {

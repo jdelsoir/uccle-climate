@@ -75,6 +75,10 @@ test('year: tile, mean, rank, stat cards', async () => {
   expect(screen.getByText('10.5 °C')).toBeInTheDocument()                       // 1991-2020 baseline
   expect(screen.getByText('Warmest year')).toBeInTheDocument()
   expect(screen.getByText('Coldest year')).toBeInTheDocument()
+  expect(screen.getByText('Warming')).toBeInTheDocument()               // °/decade card from summary.warmingRate
+  expect(screen.getByText('+0.20 °C/decade')).toBeInTheDocument()
+  expect(screen.getByText('since 1920')).toBeInTheDocument()            // first complete annual year
+  expect(screen.getByText('A warming century')).toBeInTheDocument()     // strip label (was "A warming year")
 })
 
 test('year incomplete: (so far) label shown, rank badge suppressed', async () => {
@@ -139,4 +143,36 @@ test('daily-data rendering: YearStrip and RecordsTally use real Array daily data
 
   // the barcode strip (only source of <rect> here) must sit inside the share-capture region
   expect(document.getElementById('year-capture')!.querySelector('rect')).toBeTruthy()
+})
+
+test('unified block order: grid → range bar → records tally → stat cards → counters; trend on scatter', async () => {
+  const days = [
+    { mmdd: '0715', tmax: 36, tmin: 20, recHi: true },
+    { mmdd: '0101', tmax: 5, tmin: 1 },
+  ]
+  const yearMonths = [{ mm: '07', mean: 23, normal: 18, complete: true }]
+  const dailyDayNorm = { '1991-2020': [{ doy: 196, mmdd: '0715', normal: 24, p10: 18, p90: 30 }], '1961-1990': [] }
+  const summaryWithCounters = { ...summary, counters: { ...summary.counters, SU: [{ year: 2024, n: 42 }, { year: 2000, n: 25 }] } }
+  function routeFetch(u: string) {
+    if (u.includes('/daily/')) return days
+    if (u.includes('/year/')) return yearMonths
+    if (u.includes('daynorm')) return dailyDayNorm
+    return summaryWithCounters
+  }
+  vi.stubGlobal('fetch', vi.fn().mockImplementation((u: string) => Promise.resolve({ ok: true, json: async () => routeFetch(u) })))
+  render(<YearView year={2024} onPickMonth={vi.fn()} onPickDay={vi.fn()} />)
+
+  await waitFor(() => expect(screen.getByText('Daily records set in 2024')).toBeInTheDocument())
+  const blocks = [
+    screen.getByText('2024 month by month'),        // MonthGrid
+    screen.getByText(/Where 2024 sits/i),           // RangeBar card
+    screen.getByText('Daily records set in 2024'),  // RecordsTally
+    screen.getByText('Average'),                    // stat cards
+    screen.getByText('This year by the numbers'),   // YearCounters
+    screen.getByText('Annual mean by year'),        // PeriodScatter
+  ]
+  for (let i = 0; i < blocks.length - 1; i++) {
+    expect(blocks[i].compareDocumentPosition(blocks[i + 1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  }
+  expect(screen.getByText(/trend · shown period/)).toBeInTheDocument()   // OLS trend line legend on the annual scatter
 })

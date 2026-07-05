@@ -72,6 +72,10 @@ export default function YearView({ year, onPickMonth, onPickDay }: {
   const recentMean = yearWindowMean(summary.annual, recentFrom, recentTo)
   const thenMean = yearWindowMean(summary.annual, thenFrom, thenTo)
 
+  const ratePerDecade = summary.warmingRate.full
+  const completeYears = summary.annual.filter(x => !x.incomplete)
+  const firstComplete = completeYears.length ? Math.min(...completeYears.map(x => x.year)) : null
+
   const normMap = new Map((dayNorm.data?.['1991-2020'] ?? []).map(n => [n.mmdd, n.normal]))
   const normalFor = (mmdd: string) => normMap.get(mmdd) ?? null
   const days = Array.isArray(daily.data) ? daily.data : []
@@ -133,10 +137,6 @@ export default function YearView({ year, onPickMonth, onPickDay }: {
         <MonthGrid year={year} months={yearMonths} onPickMonth={onPickMonth} />
       )}
 
-      {Array.isArray(daily.data) && <RecordsTally year={year} days={days} onPickDay={onPickDay} />}
-
-      <YearCounters year={year} counters={summary.counters} incomplete={!yComplete} />
-
       {a && recordWarm && recordCold && (
         <div className="border border-border bg-surface p-4">
           <p className="mb-2 text-[11px] uppercase tracking-[0.09em] text-muted">Where {year} sits</p>
@@ -151,22 +151,32 @@ export default function YearView({ year, onPickMonth, onPickDay }: {
         </div>
       )}
 
+      {Array.isArray(daily.data) && <RecordsTally year={year} days={days} onPickDay={onPickDay} />}
+
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
         {normal != null && <StatCard label="Average" value={fmtTemp(normal)} sub="1991–2020 normal" />}
         {delta != null && <StatCard label="This year vs average" value={`${delta > 0 ? '+' : ''}${delta.toFixed(1)} °C`} sub={deltaWord} valueClass={delta > 0 ? 'text-warm' : delta < 0 ? 'text-accent' : 'text-fg'} />}
         <StatCard label="Warmest year" value={fmtTemp(recordWarm?.mean)} sub={recordWarm ? String(recordWarm.year) : undefined} valueClass="text-warm" />
         <StatCard label="Coldest year" value={fmtTemp(recordCold?.mean)} sub={recordCold ? String(recordCold.year) : undefined} valueClass="text-accent" />
+        {ratePerDecade != null && (
+          <StatCard label="Warming"
+            value={`${ratePerDecade > 0 ? '+' : ''}${ratePerDecade.toFixed(2)} °C/decade`}
+            sub={firstComplete != null ? `since ${firstComplete}` : 'full record'}
+            valueClass={ratePerDecade > 0 ? 'text-warm' : ratePerDecade < 0 ? 'text-accent' : 'text-fg'} />
+        )}
       </div>
 
+      <YearCounters year={year} counters={summary.counters} incomplete={!yComplete} />
+
       {thenMean != null && recentMean != null && (
-        <WarmingStrip label="A warming year"
+        <WarmingStrip label="A warming century"
           then={{ mean: thenMean, from: thenFrom, to: thenTo }}
           recent={{ mean: recentMean, from: recentFrom, to: recentTo }}
           delta={Math.round((recentMean - thenMean) * 10) / 10} />
       )}
 
       <PeriodScatter title="Annual mean by year" data={summary.annual.filter(x => !x.incomplete).map(x => ({ year: x.year, mean: x.mean }))}
-        series={[{ key: 'mean', name: 'Annual mean', color: 'var(--accent)' }]} />
+        series={[{ key: 'mean', name: 'Annual mean', color: 'var(--accent)' }]} trendKey="mean" />
     </div>
   )
 }

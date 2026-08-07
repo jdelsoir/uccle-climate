@@ -1,21 +1,29 @@
 # HANDOFF
 
-## Session 2026-07-02
-
-Research-only session: ran the deep-research workflow on "creative, minimalistic ways to improve the Year screen". No code changes.
+## Session 2026-08-07
 
 ## State
-- **Year-screen research complete**: 10 ranked ideas with sources + recommended Phase C scope, written to `docs/superpowers/research/year-screen-ideas.md`.
-- Workflow stats: 5 search angles, 20 sources, 86 claims, 25 verified → 24 confirmed / 1 refuted. Synthesis agent died on a session limit; final report synthesized inline from the confirmed claims (raw claim dump was in the session task output, now superseded by the docs file).
-- Month tab remains feature-complete (Phases A + B1 + B2 shipped, see previous handoff / CLAUDE.md History). Latest `main` unchanged this session apart from docs.
+No code changes this session — LinkedIn post work only. App live and stable at https://jdelsoir.github.io/uccle-climate/ (all prior work shipped and verified; see git history).
+
+- **LinkedIn post draft v1 (EN)** written and saved to `docs/linkedin-post-draft.md` — story-first (June 2026 heatwave "record at Uccle" news hook → built the app → lesson: AI accelerates the SDLC, doesn't replace it), per-step tool list, superpowers plugin recommendation, ~1500 chars.
 
 ## Decisions
-- **Recommended Year Phase C scope**: #1 daily-anomaly year strip + #2 full-year calendar heatmap (reuse `MonthHeatmap`) + #4 year counters card (reuse `monthCounters`) + #5 records tally (`recHi`/`recLo` counts) — mirrors Month Phase A/B2 with near-total code reuse; #10 year share card rides free once #1 exists. Rationale: highest signal, lowest new-surface risk, design parity with Month.
-- #3 all-record stripe timeline = cheap standalone add; #6 distribution histogram / #7 radial year plot = distinctive but higher design risk — park unless a share-visual is wanted.
+- **Language:** English first; French translation only once the EN version is locked.
+- **Angle:** story-first (personal hook → lesson) over process-first or tool-showcase.
+- **Length:** medium ~1500 chars (LinkedIn sweet spot, avoids "see more" fatigue).
+- **Attribution:** superpowers plugin credited to Jesse Vincent; tag on LinkedIn if connected.
+- No PII, public data only — org policy clean.
 
 ## Open questions
-- Which Phase C scope to actually build (recommended set above vs a subset vs adding #3).
+- User feedback on draft v1 pending (tone, per-step detail, hook, hashtags).
+- Which image to attach: Day-view screenshot on a record-hot day vs the app's own share-card PNG.
+- Carried over: auto-retry the `deploy-pages@v5` "try again later" transient at CI level, or keep re-dispatching manually? (documented in CLAUDE.md CI section)
+- Carried over: opus subagents misbehaved on 2026-07-05 (0-tool-use spurious output) — env glitch or persistent? sonnet was reliable.
 
 ## Next steps
-- Pick Year Phase C scope → superpowers brainstorm → spec in `docs/superpowers/specs/` → plan → subagent-driven execution (standing flow).
-- Parked fast-follows unchanged (see CLAUDE.md "Known fast-follows"): dead `month_data.thenNow` cleanup, provisional-blind `summary.extremes`/`records`, Recharts code-split, fetch dedup, minor test hardening.
+- Get feedback on the EN draft → revise → lock.
+- Translate to French (post FR in first comment or as separate post — decide then).
+- Pick/capture the image, then publish.
+- **Year Phase 2 leftovers (parked):** research ideas #3 stripe timeline (overlaps PeriodScatter), #6 shifting-distribution histogram, #7 radial year plot — in `docs/superpowers/research/year-screen-ideas.md`.
+- **Me tab:** un-park + redesign when a "your lifetime" feature is wanted again.
+- **Known fast-follows** (see CLAUDE.md): monthly-mean records provisional-blind; `TINT`/watermark duplicated MonthHeatmap↔MonthGrid; `year_data` recomputes `month_data`; per-key data hooks don't reset on cursor change (brief stale-flash); Recharts bundle code-split; dead `month_data.thenNow`.

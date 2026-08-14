@@ -1,5 +1,5 @@
 import { it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import YearCounters from './YearCounters'
 import type { Summary } from '../types'
 
@@ -23,6 +23,14 @@ it('hides a counter with no normal and zero count, and says "so far" when incomp
   render(<YearCounters year={2023} counters={counters} incomplete={true} />)
   expect(screen.queryByText('tropical nights')).toBeNull()
   expect(screen.getByText(/so far/)).toBeInTheDocument()
+})
+it('opens one explanation at a time from the row icons', () => {
+  render(<YearCounters year={2023} counters={counters} incomplete={false} />)
+  fireEvent.click(screen.getByRole('button', { name: /what is a summer day/i }))
+  expect(screen.getByText(/reaches 25 °C or more/)).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: /what is a hot day/i }))
+  expect(screen.queryByText(/reaches 25 °C or more/)).toBeNull()      // the first one closed
+  expect(screen.getByText(/reaches 30 °C or more/)).toBeInTheDocument()
 })
 it('renders nothing when every counter is zero/absent', () => {
   const empty = { SU: [], hot30: [], TR: [], FD: [], ID: [], heatwaveDays: [], gsl: [] } as unknown as Summary['counters']

@@ -151,6 +151,8 @@ export default function YearView({ year, onPickMonth, onPickDay }: {
         </div>
       )}
 
+      <YearCounters year={year} counters={summary.counters} incomplete={!yComplete} />
+
       {Array.isArray(daily.data) && <RecordsTally year={year} days={days} onPickDay={onPickDay} />}
 
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
@@ -165,8 +167,6 @@ export default function YearView({ year, onPickMonth, onPickDay }: {
             valueClass={ratePerDecade > 0 ? 'text-warm' : ratePerDecade < 0 ? 'text-accent' : 'text-fg'} />
         )}
       </div>
-
-      <YearCounters year={year} counters={summary.counters} incomplete={!yComplete} />
 
       {thenMean != null && recentMean != null && (
         <WarmingStrip label="A warming century"

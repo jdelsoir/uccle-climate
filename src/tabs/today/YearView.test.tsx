@@ -166,9 +166,9 @@ test('unified block order: grid → range bar → records tally → stat cards �
   const blocks = [
     screen.getByText('2024 month by month'),        // MonthGrid
     screen.getByText(/Where 2024 sits/i),           // RangeBar card
+    screen.getByText('This year by the numbers'),   // YearCounters
     screen.getByText('Daily records set in 2024'),  // RecordsTally
     screen.getByText('Average'),                    // stat cards
-    screen.getByText('This year by the numbers'),   // YearCounters
     screen.getByText('Annual mean by year'),        // PeriodScatter
   ]
   for (let i = 0; i < blocks.length - 1; i++) {

@@ -109,4 +109,4 @@ A second workflow (`.github/workflows/refresh.yml`) re-runs the deploy on a **da
 
 > Open-Meteo is used under its free non-commercial tier. For a high-traffic or commercial deployment, review [Open-Meteo's licensing](https://open-meteo.com/en/terms).
 
-<!-- ci: trigger deploy 2026-10-03 (pipeline test) -->
+<!-- ci: trigger deploy 2026-10-03 (pipeline test 2) -->

@@ -108,3 +108,5 @@ A second workflow (`.github/workflows/refresh.yml`) re-runs the deploy on a **da
 | **RMI / KMI Belgium** — Uccle reference station | Historical observations contributed to GHCN; Uccle (station `BE000006447`) is the official Belgian climate reference. |
 
 > Open-Meteo is used under its free non-commercial tier. For a high-traffic or commercial deployment, review [Open-Meteo's licensing](https://open-meteo.com/en/terms).
+
+<!-- ci: trigger deploy 2026-10-03 -->
